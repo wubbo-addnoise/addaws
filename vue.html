@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8" />
+    <title>AddAWS</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="columns.css" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+
+    <div id="app">
+        <div class="main container">
+            <h1>AddAWS</h1>
+            <nav class="menubar">
+                <ul class="menu" data-tab-group>
+                    <li class="item"><a href="#" class="active" data-tab="maintab-clients">Klanten</a></li>
+                    <li class="item"><a href="#" data-tab="maintab-stacks">Stacks</a></li>
+                    <li class="item"><a href="#" data-tab="maintab-databases">Databases</a></li>
+                    <li class="item"><a href="#" data-tab="maintab-efs">EFS</a></li>
+                    <li class="item"><a href="#" data-tab="maintab-servers">Servers</a></li>
+                </ul>
+            </nav>
+            <div class="tabs" data-tab-group>
+                <div class="active tab" data-tab="maintab-clients" id="clients-view">
+                    <h2>Klanten</h2>
+                    <div class="content">
+                        <table class="table striped">
+                            <thead>
+                                <tr>
+                                    <th>Klant</th>
+                                    <th>ID</th>
+                                    <th>&nbsp;</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <client-row v-for="client in clients" v-bind:client="client"></client-row>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="button">Nieuwe klant</button>
+                </div>
+                <div class="tab" data-tab="maintab-stacks" id="stacks-view">
+                    <h2>Stacks</h2>
+                </div>
+                <div class="tab" data-tab="maintab-databases" id="databases-view">
+                    <h2>Databases</h2>
+                </div>
+                <div class="tab" data-tab="maintab-efs" id="efs-view">
+                    <h2>EFS</h2>
+                </div>
+                <div class="tab" data-tab="maintab-servers" id="servers-view">
+                    <h2>Servers</h2>
+                </div>
+            </div>
+            {{message}}
+        </div>
+    </div>
+
+<!--
+    <div class="main container">
+        <h1>AddAWS</h1>
+        <nav class="menubar">
+            <ul class="menu" data-tab-group>
+                <li class="item"><a href="#" class="active" data-tab="maintab-clients">Klanten</a></li>
+                <li class="item"><a href="#" data-tab="maintab-stacks">Stacks</a></li>
+                <li class="item"><a href="#" data-tab="maintab-databases">Databases</a></li>
+                <li class="item"><a href="#" data-tab="maintab-efs">EFS</a></li>
+                <li class="item"><a href="#" data-tab="maintab-servers">Servers</a></li>
+            </ul>
+        </nav>
+        <div class="tabs" data-tab-group>
+            <div class="active tab" data-tab="maintab-clients" id="clients-view">
+                <h2>Klanten</h2>
+                <div class="content"></div>
+                <button class="button">Nieuwe klant</button>
+            </div>
+            <div class="tab" data-tab="maintab-stacks" id="stacks-view">
+                <h2>Stacks</h2>
+            </div>
+            <div class="tab" data-tab="maintab-databases" id="databases-view">
+                <h2>Databases</h2>
+            </div>
+            <div class="tab" data-tab="maintab-efs" id="efs-view">
+                <h2>EFS</h2>
+            </div>
+            <div class="tab" data-tab="maintab-servers" id="servers-view">
+                <h2>Servers</h2>
+            </div>
+        </div>
+    </div>
+-->
+<!--
+    <div class="modal" id="client-detail-modal">
+        <div class="modal-inner">
+            <nav class="menubar">
+                <ul class="menu" data-tab-group>
+                    <li class="item"><a href="#" class="active" data-tab="clienttab-resources">Resources</a></li>
+                    <li class="item"><a href="#" data-tab="clienttab-edit">Aanpassen</a></li>
+                </ul>
+            </nav>
+            <div class="tabs" data-tab-group>
+                <div class="active tab" data-tab="clienttab-resources">
+                    <h2>Stacks</h2>
+                    <h2>Servers</h2>
+                    <h2>Opslag</h2>
+                    <h2>Databases</h2>
+                </div>
+                <div class="tab" data-tab="clienttab-edit">
+                    <h2>Klant aanpassen</h2>
+                    <form class="form">
+                        <div class="field">
+                            <label for="client_name">Naam</label>
+                            <input type="text" name="client_name" id="client_name" />
+                        </div>
+                        <div class="buttons">
+                            <button type="submit" class="button">Opslaan</button>
+                            <button type="button" class="button outline delete" data-action="delete" style="display: none">Klant verwijderen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="stack-edit-modal">
+        <div class="modal-inner">
+            <h2>Stack aanpassen</h2>
+            <div class="callout warning hidden">
+                Deze stack heeft nog geen tags die de klant en het type opslag en database specificeren.
+            </div>
+            <form class="form">
+                <div class="field">
+                    <label for="stack_name">Naam</label>
+                    <input type="text" name="stack_name" id="stack_name" />
+                </div>
+                <div class="field">
+                    <label for="stack_client">Klant</label>
+                    <select name="stack_client" class="custom-select fullwidth">
+                        <option value="1">HISWA</option>
+                        <option value="2">King Verzekeringen</option>
+                        <option value="3">Addnoise</option>
+                    </select>
+                </div>
+                <div class="cols cols-2">
+                    <div class="col">
+                        <div class="field">
+                            <label for="stack_efs_type">Opslagtype</label>
+                            <select name="stack_efs_type" class="custom-select fullwidth">
+                                <option value="shared">Gedeeld</option>
+                                <option value="private">Eigen opslag</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="field">
+                            <label for="stack_efs">EFS</label>
+                            <select name="stack_efs" class="custom-select fullwidth">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="cols cols-2">
+                    <div class="col">
+                        <div class="field">
+                            <label for="stack_db_type">Database type</label>
+                            <select name="stack_db_type" class="custom-select fullwidth">
+                                <option value="shared">Gedeeld</option>
+                                <option value="private">Eigen server</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="field">
+                            <label for="stack_database">Database</label>
+                            <select name="stack_database" class="custom-select fullwidth">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <button type="submit" class="button">Opslaan</button>
+                    <button type="button" class="button outline delete" data-action="delete" style="display: none">Klant verwijderen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="database-detail-modal">
+        <div class="modal-inner">
+            <h2>Database</h2>
+        </div>
+    </div>
+
+    <div class="modal" id="search-modal">
+        <div class="modal-inner">
+            <div class="searchbox">
+                <h2>Zoek een klant</h2>
+                <div class="input">
+                    <i class="material-icons">search</i>
+                    <input type="text" name="query" />
+                </div>
+                <div class="results">
+                    <div class="filters">
+                        <p>Specifiek zoeken</p>
+                        <select class="custom-select" name="searchfield" id="topbar_searchfield">
+                            <option value="*">Alle velden</option>
+                            <option value="first_name">Voornaam</option>
+                            <option value="last_name">Achternaam</option>
+                            <option value="full_name">Volledige naam</option>
+                            <option value="company">Bedrijf</option>
+                            <option value="address1">Adres</option>
+                            <option value="zip_code">Postcode</option>
+                            <option value="city">Woonplaats</option>
+                            <option value="email">E-mail</option>
+                            <option value="country">Land</option>
+                        </select>
+                        <select class="custom-select" name="searchoperator" id="searchoperator" size="1" style="margin-top: 5px;">
+                            <option value="contains">bevat</option>
+                            <option value="is">is</option>
+                            <option value="beginsWith">begint met</option>
+                            <option value="endsWith">eindigt met</option>
+                        </select>
+                    </div>
+                    <div class="list">
+                        <div class="menubar">
+                            <ul class="menu" data-filter-group>
+                                <li class="item"><a href="#" class="active" data-filter="*">Alles</a></li>
+                                <li class="item"><a href="#" data-filter="companies">Bedrijven</a></li>
+                                <li class="item"><a href="#" data-filter="persons">Contactpersonen</a></li>
+                            </ul>
+                        </div>
+                        <div class="results-list">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+-->
+<!--
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.532.0.min.js"></script>
+    <script src="js/base.js"></script>
+
+    <script src="js/aws.js"></script>
+
+    <script src="js/dom-utils.js"></script>
+
+    <script src="js/ux/loader.js"></script>
+
+    <script src="js/plugins/tabs.js"></script>
+    <script src="js/plugins/select.js"></script>
+
+    <script src="js/view.js"></script>
+    <script src="js/finder.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/searchbox.js"></script>
+
+    <script src="js/ui/clients.js"></script>
+    <script src="js/ui/stacks.js"></script>
+    <script src="js/ui/databases.js"></script>
+    <script src="js/ui/efs.js"></script>
+    <script src="js/ui/servers.js"></script>
+
+    <script>
+    let clientsTable = new DBTable("Client");
+    let stacksTable = new DBTable("Stack");
+
+    let rdsDataSource = new DataSourceRDS();
+    let efsDataSource = new DataSourceEFS();
+
+    let app = {
+        clientsView: new ClientsView(document.getElementById("clients-view"), {
+            clientsTable: clientsTable
+        }),
+        stacksView: new StacksView(document.getElementById("stacks-view"), {
+            stacksTable: stacksTable,
+            clientsTable: clientsTable,
+            rdsDataSource: rdsDataSource,
+            efsDataSource: efsDataSource,
+        }),
+        databasesView: new DatabasesView(document.getElementById("databases-view"), {
+            dataSource: rdsDataSource
+        }),
+        efsView: new EFSView(document.getElementById("efs-view"), {
+            dataSource: efsDataSource
+        }),
+        serversView: new ServersView(document.getElementById("servers-view"))
+    };
+
+    Plugins.tabs(document);
+    </script>
+-->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+        Vue.component("client-row", {
+            props: [ "client" ],
+            template: '<tr><td>{{client.info.name}}</td><td>{{client.uid}}</td><td><a href="#" data-action="showDetail({{client.uid}})">Klant bekijken</a></td></tr>'
+        });
+
+        let app = new Vue({
+            el: "#app",
+            data: {
+                message: "Hello world!",
+                clients: [
+                    { uid: 123, info: { name: "AddNoise" } },
+                    { uid: 456, info: { name: "Hiswa" } },
+                    { uid: 789, info: { name: "King Verzekeringen" } }
+                ]
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8" />
+    <title>AddAWS</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="columns.css" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+
+    <div class="main container">
+        <h1>AddAWS</h1>
+        <nav class="menubar">
+            <ul class="menu" data-tab-group>
+                <li class="item"><a href="#" class="active" data-tab="maintab-clients">Klanten</a></li>
+                <li class="item"><a href="#" data-tab="maintab-stacks">Stacks</a></li>
+                <li class="item"><a href="#" data-tab="maintab-databases">Database servers</a></li>
+                <li class="item"><a href="#" data-tab="maintab-efs">EFS</a></li>
+                <li class="item"><a href="#" data-tab="maintab-servers">Servers</a></li>
+            </ul>
+        </nav>
+        <div class="tabs" data-tab-group>
+            <div class="active tab" data-tab="maintab-clients" id="clients-view">
+                <h2>Klanten</h2>
+                <div class="content"></div>
+                <button class="button">Nieuwe klant</button>
+            </div>
+            <div class="tab" data-tab="maintab-stacks" id="stacks-view">
+                <h2>Stacks</h2>
+                <div class="content"></div>
+                <button class="button" data-action="addStack">Nieuwe stack</button>
+            </div>
+            <div class="tab" data-tab="maintab-databases" id="databases-view">
+                <h2>Database servers</h2>
+                <div class="content"></div>
+            </div>
+            <div class="tab" data-tab="maintab-efs" id="efs-view">
+                <h2>EFS</h2>
+                <div class="content"></div>
+            </div>
+            <div class="tab" data-tab="maintab-servers" id="servers-view">
+                <h2>Servers</h2>
+                <div class="content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="client-detail-modal">
+        <div class="modal-inner">
+            <h2 class="modal-title">Klant</h2>
+            <nav class="menubar">
+                <ul class="menu" data-tab-group>
+                    <li class="item"><a href="#" class="active" data-tab="clienttab-resources">Resources</a></li>
+                    <li class="item"><a href="#" data-tab="clienttab-edit">Aanpassen</a></li>
+                </ul>
+            </nav>
+            <div class="tabs" data-tab-group>
+                <div class="active tab" data-tab="clienttab-resources">
+                    <h3>Stacks</h3>
+                    <div class="stacks-content"></div>
+                    <h3>Servers</h3>
+                    <div class="servers-content"></div>
+                    <h3>Load Balancers</h3>
+                    <div class="elb-content"></div>
+                    <h3>Databases</h3>
+                    <div class="db-content"></div>
+                    <h3>EFS Directories</h3>
+                    <div class="efs-content"></div>
+                </div>
+                <div class="tab" data-tab="clienttab-edit">
+                    <h3>Klant aanpassen</h3>
+                    <form class="form">
+                        <div class="field">
+                            <label for="client_name">Naam</label>
+                            <input type="text" name="client_name" id="client_name" />
+                        </div>
+                        <div class="buttons">
+                            <button type="submit" class="button">Opslaan</button>
+                            <button type="button" class="button outline delete" data-action="delete" style="display: none">Klant verwijderen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="stack-edit-modal">
+        <div class="modal-inner">
+            <h2>Stack aanpassen</h2>
+            <div class="callout warning hidden">
+                Deze stack heeft nog geen tags die de klant en het type opslag en database specificeren.
+            </div>
+            <form class="form">
+                <div class="field">
+                    <label for="stack_name">Naam</label>
+                    <input type="text" name="stack_name" id="stack_name" />
+                </div>
+                <div class="field">
+                    <label for="stack_client">Klant</label>
+                    <select name="stack_client" class="custom-select fullwidth">
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="stack_status">Status</label>
+                    <select name="stack_status" class="custom-select fullwidth">
+                        <option value="running">Draaiend</option>
+                        <option value="paused">Gepauzeerd</option>
+                        <option value="stopped">Gestopt</option>
+                    </select>
+                </div>
+                <div class="cols cols-2">
+                    <div class="col">
+                        <div class="field">
+                            <label for="stack_efs_type">Opslagtype</label>
+                            <select name="stack_efs_type" class="custom-select fullwidth">
+                                <option value="shared">Gedeeld</option>
+                                <option value="private">Eigen opslag</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="field">
+                            <label for="stack_efs">EFS</label>
+                            <select name="stack_efs" class="custom-select fullwidth">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="cols cols-2">
+                    <div class="col">
+                        <div class="field">
+                            <label for="stack_db_type">Database type</label>
+                            <select name="stack_db_type" class="custom-select fullwidth">
+                                <option value="shared">Gedeeld</option>
+                                <option value="private">Eigen server</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="field">
+                            <label for="stack_database">Database</label>
+                            <select name="stack_database" class="custom-select fullwidth">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <button type="submit" class="button">Opslaan</button>
+                    <button type="button" class="button outline delete" data-action="delete" style="display: none">Klant verwijderen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="database-detail-modal">
+        <div class="modal-inner">
+            <h2>Database server</h2>
+            <div class="content"></div>
+            <button type="button" class="button" data-action="addDatabase">Database toevoegen</button>
+        </div>
+    </div>
+
+    <div class="modal" id="database-edit-modal">
+        <div class="modal-inner">
+            <h2>Database</h2>
+            <form class="form">
+                <div class="field">
+                    <label for="db_name">Naam</label>
+                    <input type="text" name="name" id="db_name" />
+                </div>
+                <div class="field">
+                    <label for="db_client">Klant</label>
+                    <select name="client" id="db_client" class="custom-select fullwidth">
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="db_based_on">Gebaseerd op</label>
+                    <select class="custom-select" name="based_on" id="db_based_on">
+                        <option value="addsite_live">addsite_live</option>
+                        <option value="addsite_object">addsite_object</option>
+                        <option value="other">Anders...</option>
+                    </select>
+                </div>
+                <div class="field" data-show-when="based_on = 'other'">
+                    <!-- <label for="db_name">Naam</label> -->
+                    <input type="text" name="based_on_other" id="db_based_on_other" data-focus-when="based_on = 'other'" />
+                </div>
+                <button type="submit" class="button">Opslaan</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="efs-detail-modal">
+        <div class="modal-inner">
+            <h2>EFS server</h2>
+            <div class="content"></div>
+            <button type="button" class="button" data-action="addDirectory">Directory toevoegen</button>
+        </div>
+    </div>
+
+    <div class="modal" id="efs-edit-modal">
+        <div class="modal-inner">
+            <h2>Directory</h2>
+            <form class="form">
+                <div class="field">
+                    <label for="db_name">Naam</label>
+                    <input type="text" name="name" id="db_name" />
+                </div>
+                <div class="field">
+                    <label for="db_client">Klant</label>
+                    <select name="client" id="db_client" class="custom-select fullwidth">
+                    </select>
+                </div>
+                <button type="submit" class="button">Opslaan</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="search-modal">
+        <div class="modal-inner">
+            <div class="searchbox">
+                <h2>Zoek een klant</h2>
+                <div class="input">
+                    <i class="material-icons">search</i>
+                    <input type="text" name="query" />
+                </div>
+                <div class="results">
+                    <div class="filters">
+                        <p>Specifiek zoeken</p>
+                        <select class="custom-select" name="searchfield" id="topbar_searchfield">
+                            <option value="*">Alle velden</option>
+                            <option value="first_name">Voornaam</option>
+                            <option value="last_name">Achternaam</option>
+                            <option value="full_name">Volledige naam</option>
+                            <option value="company">Bedrijf</option>
+                            <option value="address1">Adres</option>
+                            <option value="zip_code">Postcode</option>
+                            <option value="city">Woonplaats</option>
+                            <option value="email">E-mail</option>
+                            <option value="country">Land</option>
+                        </select>
+                        <select class="custom-select" name="searchoperator" id="searchoperator" size="1" style="margin-top: 5px;">
+                            <option value="contains">bevat</option>
+                            <option value="is">is</option>
+                            <option value="beginsWith">begint met</option>
+                            <option value="endsWith">eindigt met</option>
+                        </select>
+                    </div>
+                    <div class="list">
+                        <div class="menubar">
+                            <ul class="menu" data-filter-group>
+                                <li class="item"><a href="#" class="active" data-filter="*">Alles</a></li>
+                                <li class="item"><a href="#" data-filter="companies">Bedrijven</a></li>
+                                <li class="item"><a href="#" data-filter="persons">Contactpersonen</a></li>
+                            </ul>
+                        </div>
+                        <div class="results-list">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="server-edit-modal">
+        <div class="modal-inner">
+            <h2>Server</h2>
+            <p class="public-domain"></p>
+            <form class="form">
+                <div class="field">
+                    <label for="db_client">Klant</label>
+                    <select name="client" id="db_client" class="custom-select fullwidth">
+                    </select>
+                </div>
+                <button type="submit" class="button">Opslaan</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.540.0.min.js"></script>
+    <script src="js/base.js"></script>
+
+    <script src="js/aws.js"></script>
+
+    <script src="js/dom-utils.js"></script>
+
+    <script src="js/ux/loader.js"></script>
+
+    <script src="js/plugins/tabs.js"></script>
+    <script src="js/plugins/select.js"></script>
+
+    <script src="js/view.js"></script>
+    <script src="js/finder.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/searchbox.js"></script>
+
+    <script src="js/ui/clients.js"></script>
+    <script src="js/ui/stacks.js"></script>
+    <script src="js/ui/databases.js"></script>
+    <script src="js/ui/efs.js"></script>
+    <script src="js/ui/servers.js"></script>
+
+    <script>
+    try {
+        let clientsTable = new DBTable("Client", { defaultSort: "info.name" });
+        let stacksTable = new DBTable("Stack", { defaultSort: "uid/i" });
+        let databasesTable = new DBTable("Database");
+        let efsTable = new DBTable("EFS");
+
+        let rdsDataSource = new DataSourceRDS();
+        let efsDataSource = new DataSourceEFS();
+        let ec2DataSource = new DataSourceEC2();
+
+        let app = {
+            clientsView: new ClientsView(document.getElementById("clients-view"), {
+                clientsTable: clientsTable,
+                databasesTable: databasesTable,
+                stacksTable: stacksTable,
+                efsTable: efsTable,
+                ec2DataSource: ec2DataSource,
+            }),
+            stacksView: new StacksView(document.getElementById("stacks-view"), {
+                stacksTable: stacksTable,
+                clientsTable: clientsTable,
+                rdsDataSource: rdsDataSource,
+                efsDataSource: efsDataSource,
+            }),
+            databasesView: new DatabasesView(document.getElementById("databases-view"), {
+                dataSource: rdsDataSource,
+                databasesTable: databasesTable,
+                clientsTable: clientsTable,
+            }),
+            efsView: new EFSView(document.getElementById("efs-view"), {
+                dataSource: efsDataSource,
+                efsTable: efsTable,
+                clientsTable: clientsTable,
+            }),
+            serversView: new ServersView(document.getElementById("servers-view"), {
+                dataSource: ec2DataSource,
+                clientsTable: clientsTable,
+            })
+        };
+
+        Plugins.tabs(document);
+    } catch (e) {
+        console.log(e);
+    }
+    </script>
+
+</body>
+</html>

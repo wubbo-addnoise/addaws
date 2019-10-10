@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8" />
+    <title>AddAWS</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="columns.css" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body style="background-color:#fafafa">
+
+    <div class="main container" style="height: 500px; background-color: #ebebeb; position: relative;">
+    </div>
+
+    <script src="js/base.js"></script>
+    <script src="js/ux/loader.js"></script>
+
+    <script>
+        let loader = new Ux.Loader(document.querySelector(".main.container"));
+        setTimeout(() => {
+            loader.stop("success", "De wijzigingen zijn opgeslagen", [ 2000, "button" ]);
+        }, 1000);
+    </script>
+
+</body>
+</html>

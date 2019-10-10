@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8" />
+    <title>AddAWS</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="columns.css" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+
+    <div class="main container">
+        <h1>AddAWS</h1>
+
+        <div class="searchbox">
+            <div class="input">
+                <i class="material-icons">search</i>
+                <input type="text" name="query" />
+            </div>
+            <div class="results">
+                <div class="filters">
+                    <p>Specifiek zoeken</p>
+                    <select class="custom-select" name="searchfield" id="topbar_searchfield">
+                        <option value="*">Alle velden</option>
+                        <option value="first_name">Voornaam</option>
+                        <option value="last_name">Achternaam</option>
+                        <option value="full_name">Volledige naam</option>
+                        <option value="company">Bedrijf</option>
+                        <option value="address1">Adres</option>
+                        <option value="zip_code">Postcode</option>
+                        <option value="city">Woonplaats</option>
+                        <option value="email">E-mail</option>
+                        <option value="country">Land</option>
+                    </select>
+                    <select class="custom-select" name="searchoperator" id="searchoperator" size="1" style="margin-top: 5px;">
+                        <option value="contains">bevat</option>
+                        <option value="is">is</option>
+                        <option value="beginsWith">begint met</option>
+                        <option value="endsWith">eindigt met</option>
+                    </select>
+                </div>
+                <div class="list">
+                    <div class="menubar">
+                        <ul class="menu" data-filter-group>
+                            <li class="item"><a href="#" class="active" data-filter="*">Alles</a></li>
+                            <li class="item"><a href="#" data-filter="companies">Bedrijven</a></li>
+                            <li class="item"><a href="#" data-filter="persons">Contactpersonen</a></li>
+                        </ul>
+                    </div>
+                    <div class="results-list">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Finder {
+            constructor(url) {
+                this.url = url;
+                this.cache = {};
+            }
+
+            find(params) {
+                return new Promise((resolve, reject) => {
+                    let url = this.url;
+                    for (let key in params) {
+                        url = url.replace(new RegExp('\\{\\{' + key + '\\}\\}', 'g'), encodeURIComponent(params[key]));
+                    }
+
+                    function doResolve(response) {
+                        if (typeof response == "string" && (response[0] == '{' || response[0] == '[')) {
+                            response = JSON.parse(response);
+                        }
+                        resolve(response);
+                    }
+
+                    if (url in this.cache) {
+                        doResolve(this.cache[url]);
+                    } else {
+                        let xhr = new XMLHttpRequest();
+                        xhr.addEventListener("readystatechange", () => {
+                            if (xhr.readyState == 4) {
+                                if (Math.floor(xhr.status / 100) == 2) {
+                                    this.cache[url] = xhr.response;
+                                    doResolve(this.cache[url]);
+                                }
+                            }
+                        });
+                        xhr.open("GET", url, true);
+                        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                        xhr.send();
+                    }
+                });
+            }
+        }
+
+        {
+            function toggleCustomSelect(event) {
+                event.preventDefault();
+                this.parentElement.classList.toggle("cs-open");
+            }
+
+            function selectOption(event) {
+                event.preventDefault();
+                let option = event.target;
+
+                if (!option.hasAttribute("data-index")) return;
+
+                let index = parseInt(option.getAttribute("data-index"));
+                let wrapper = this.parentElement.parentElement;
+
+                let select = wrapper.querySelector("select");
+                select.selectedIndex = index;
+                select.dispatchEvent(new Event("change"));
+                wrapper.querySelector(".cs-label").innerHTML = option.innerHTML;
+
+                let currOption = this.querySelector(".cs-selected");
+                if (currOption) {
+                    currOption.classList.remove("cs-selected");
+                }
+                option.classList.add("cs-selected");
+                wrapper.classList.toggle("cs-open");
+            }
+
+            let selects = document.querySelectorAll("select.custom-select");
+            for (let i = 0; i < selects.length; i++) {
+                let select = selects[i];
+                let wrapper = document.createElement("div");
+                wrapper.className = "cs-wrapper";
+                select.parentElement.insertBefore(wrapper, select);
+                wrapper.appendChild(select);
+
+                let label = document.createElement("div");
+                label.className = "cs-label";
+                wrapper.appendChild(label);
+
+                let dropdown = document.createElement("div");
+                dropdown.className = "cs-dropdown";
+                wrapper.appendChild(dropdown);
+
+                let list = document.createElement("div");
+                list.className = "cs-list";
+                dropdown.appendChild(list);
+
+                for (let o = 0; o < select.options.length; o++) {
+                    let option = select.options[o];
+                    let optEl = document.createElement("div");
+                    optEl.className = "cs-option";
+                    if (option.selected) {
+                        optEl.classList.add("cs-selected");
+                        label.innerHTML = option.innerHTML;
+                    }
+                    optEl.setAttribute("data-index", o);
+                    optEl.innerHTML = option.innerHTML;
+                    list.appendChild(optEl);
+                }
+
+                label.addEventListener("click", toggleCustomSelect);
+                list.addEventListener("click", selectOption);
+            }
+        }
+
+        function activateSibling(sibling, parentAttribute, childAttribute, childSelector, activeClass) {
+            childSelector = childSelector || `${sibling.tagName.toLowerCase()}[${childAttribute}]`;
+            activeClass = activeClass || "active";
+
+            let parent = sibling.parentElement;
+            while (parent && !parent.hasAttribute(parentAttribute)) {
+                parent = parent.parentElement;
+            }
+            if (parent) {
+                let children = parent.querySelectorAll(childSelector);
+                for (let i = 0; i < children.length; i++) {
+                    if (children[i].hasAttribute(childAttribute)) {
+                        if (children[i] == sibling) {
+                            children[i].classList.add(activeClass);
+                        } else {
+                            children[i].classList.remove(activeClass);
+                        }
+                    }
+                }
+            }
+        }
+
+        class SearchBox {
+            constructor(element) {
+                this.element = element;
+
+                let selects = this.element.querySelectorAll("select");
+                for (let i = 0; i < selects.length; i++) {
+                    selects[i].addEventListener("change", (event) => this.update());
+                }
+                let input = this.element.querySelector("input");
+                input.addEventListener("keydown", () => input.oldValue = input.value);
+                input.addEventListener("keyup", () => {
+                    if (input.oldValue != input.value) {
+                        this.update();
+                    }
+                });
+
+                this.finder = new Finder("https://intern.addnoise.nl/contacts/detail/searchperson/?searchterm={{query}}&orderby=&filterby={{filterby}}&operator={{operator}}&filter={{filter}}&apikey=bse4iTM2xYs6HAtUeR9dakJ2TMgnTvJx");
+                this.resultsList = document.querySelector(".results-list");
+                this.isUpdating = false;
+
+                this.filter = "*";
+                let tabs = this.element.querySelectorAll(".menubar .item a");
+                for (let i = 0; i < tabs.length; i++) {
+                    tabs[i].addEventListener("click", (event) => {
+                        event.preventDefault();
+                        this.filter = event.target.getAttribute("data-filter");
+                        DomUtils.activateSibling(event.target, "data-filter-group", "data-filter");
+                        this.update();
+                    });
+                }
+
+                if (input.value) {
+                    this.update();
+                }
+            }
+
+            getValue(name, defaultValue) {
+                defaultValue = defaultValue || null;
+                let element = this.element.querySelector(`[name="${name}"]`);
+                if (!element) return defaultValue;
+                if (element.tagName.toLowerCase() == "SELECT") {
+                    if (element.selectedIndex < 0) return defaultValue;
+                    return element.options[element.selectedIndex].value;
+                }
+                return element.value;
+            }
+
+            update() {
+                if (!this.isUpdating) {
+                    let query = this.getValue("query", "");
+                    if (!query) return;
+
+                    this.isUpdating = true;
+                    this.finder.find({
+                        query: query,
+                        filterby: this.getValue("searchfield", "*"),
+                        operator: this.getValue("searchoperator", "contains"),
+                        filter: this.filter
+                    }).then((result) => {
+                        let html = "";
+                        for (let i = 0; i < result.results.length; i++) {
+                            let item = result.results[i];
+                            html += `<div class="item" data-id="${item.id}">
+                                        <div class="title">
+                                            <i class="material-icons">${item.is_company ? 'business' : 'person'}</i>
+                                            ${item.title}
+                                        </div>
+                                        <div class="meta">
+                                            ${item.address1 ? item.address1 + '<br/>' : ""}
+                                            ${item.postal ? item.postal + ', ' : ''}${item.place ? item.place : ''}${item.postal || item.place ? '<br/>' : ''}
+                                            ${item.email ? item.email : ''}
+                                        </div>
+                                    </div>`;
+                        }
+                        this.resultsList.innerHTML = html;
+                        this.isUpdating = false;
+                    });
+                }
+            }
+        }
+
+        let searchBox = new SearchBox(document.querySelector(".searchbox"));
+    </script>
+
+</body>
+</html>
