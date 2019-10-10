@@ -497,6 +497,7 @@ button.button {
     display: none;
     background-color: #fff;
     box-shadow: 0 2px 24px 0 rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(101, 119, 134, 0.25);
     padding: 8px 0;
     position: absolute;
     top: 100%;

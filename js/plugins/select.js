@@ -42,7 +42,7 @@ function select_onChange(event) {
         let optionEl = wrapper.querySelector(`[data-index="${index}"]`);
         let currOption = wrapper.querySelector(".cs-selected");
         if (currOption) currOption.classList.remove("cs-selected");
-        optionEl.classList.add("selected");
+        optionEl.classList.add("cs-selected");
         let label = wrapper.querySelector(".cs-label");
         label.innerHTML = optionEl.innerHTML;
     }
