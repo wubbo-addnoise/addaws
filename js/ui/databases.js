@@ -23,7 +23,6 @@ class DatabaseEditView extends ModalView {
 
             if (this.database) {
                 this.databasesTable.getItem({ server: this.server, database: this.database }).then(item => {
-                    console.log(item);
                     this.form.getField("name").setValue(item.database);
                     this.form.getField("client").setValue(item.info.client);
                     this.form.getField("based_on").setValue((item.info.based_on == "addsite_live" || item.info.based_on == "addsite_object") ? item.info.based_on : "other");
@@ -81,6 +80,7 @@ class DatabaseDetailView extends ModalView {
             .addColumn("name", "Database")
             .addColumn("based_on", "Gebaseerd op")
             .addColumn("client", "Klant")
+            .addColumn("usage", "Gebruik", { content: formatFileSize })
             .addColumn("_", "_", { align: "right" });
         this.element.querySelector(".content").appendChild(this.domTable.element);
 
@@ -111,6 +111,7 @@ class DatabaseDetailView extends ModalView {
                     name: items[i].database,
                     based_on: items[i].info.based_on || "",
                     client: items[i].info.client,
+                    usage: items[i].info.usage||0,
                     _: `<a href="#" data-action="editDatabase(${items[i].database})">Aanpassen <i class="material-icons">chevron_right</i></a>`
                 });
                 ((index, db) => {
@@ -142,13 +143,30 @@ class DatabaseDetailView extends ModalView {
     }
 }
 
+function formatFileSize(size) {
+    let output = size;
+    size = parseInt(size);
+    if (size > 1073741824) {
+        output = `${Math.round(size * 10 / 1073741824) / 10} GB`;
+    } else if (size > 1048576) {
+        output = `${Math.round(size * 10 / 1048576) / 10} MB`;
+    } else if (size > 1024) {
+        output = `${Math.round(size * 10 / 1024) / 10} KB`;
+    } else {
+        output = `${size} B`;
+    }
+
+    return output;
+}
+
 class DatabasesView extends View {
     viewDidLoad() {
         this.domTable = new Dom.Table();
         this.domTable
             .addColumn("name", "Database Server")
             .addColumn("status", "Status")
-            .addColumn("num_db", "Aantal databases");
+            .addColumn("num_db", "Aantal databases")
+            .addColumn("usage", "Gebruik", { content: formatFileSize });
             //.addColumn("_", "_", { align: "right" });
         this.element.querySelector(".content").appendChild(this.domTable.element);
 
@@ -184,18 +202,24 @@ class DatabasesView extends View {
             }, db.DBInstanceIdentifier);
         }).then(() => {
             this.databasesTable.getItems().then(items => {
-                let numDbs = {};
+                let servers = {};
+                let usage = {};
 
                 for (let i = 0; i < items.length; i++) {
                     let item = items[i];
-                    if (!(item.server in numDbs)) {
-                        numDbs[item.server] = 0;
+                    if (!(item.server in servers)) {
+                        servers[item.server] = { numDbs: 0, usage: 0 };
                     }
-                    numDbs[item.server]++;
+
+                    servers[item.server].numDbs++;
+                    if (item.info.usage) {
+                        servers[item.server].usage += item.info.usage;
+                    }
                 }
 
-                for (let name in numDbs) {
-                    this.domTable.getCell(name, "num_db").setHtml(numDbs[name]);
+                for (let name in servers) {
+                    this.domTable.getCell(name, "num_db").setHtml(servers[name].numDbs);
+                    this.domTable.getCell(name, "usage").setHtml(formatFileSize(servers[name].usage));
                 }
 
                 this.invalidated = false;

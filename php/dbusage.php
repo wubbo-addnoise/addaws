@@ -2,13 +2,49 @@
 
 $config = include "config.php";
 
-function checkdb($host, $username, $password) {
+$awsCommand = "/Users/wubbobos/Library/Python/3.6/bin/aws";
+
+function updateItem($server, $database, $info) {
+    global $awsCommand;
+
+    $updates = [];
+    $attrNames = [];
+    $attrValues = [];
+    foreach ($info as $key => $value) {
+        $typeKey = "S";
+        if (is_int($value)) $typeKey = "N";
+        $updates[] = "info.#{$key} = :{$key}";
+        $attrNames["#{$key}"] = $key;
+        $attrValues[":{$key}"] = [ $typeKey => "{$value}" ];
+    }
+    $updateExpression = "SET " . implode(", ", $updates);
+    $expressionAttributeNames = json_encode($attrNames);
+    $expressionAttributeValues = json_encode($attrValues);
+    $key = json_encode(["server" => [ "S" => $server ], "database" => [ "S" => $database ]]);
+
+    $cmd = "{$awsCommand} dynamodb update-item " .
+        "--table-name \"Database\" " .
+        "--key '{$key}' " .
+        "--update-expression \"{$updateExpression}\" " .
+        "--expression-attribute-names '{$expressionAttributeNames}' " .
+        "--expression-attribute-values '{$expressionAttributeValues}'";
+
+    echo "Updating {$server}.{$database}: " . json_encode($info) . "\n";
+    exec($cmd, $output, $return_val);
+    // echo $cmd . PHP_EOL;
+}
+
+function checkdb($host, $username, $password, $databases = null) {
     $pdo = new PDO("mysql:host={$host}", $username, $password);
+
+    $where = $databases
+        ? "`TABLE_SCHEMA` IN ('" . implode("', '", $databases) . "')"
+        : "`TABLE_SCHEMA` NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys', 'tmp')";
 
     $stmt = $pdo->query(
         "SELECT `TABLE_SCHEMA`, SUM(`DATA_LENGTH`) AS `SUM_DATA_LENGTH`, SUM(`INDEX_LENGTH`) AS `SUM_INDEX_LENGTH`
             FROM `information_schema`.`TABLES`
-            WHERE `TABLE_SCHEMA` NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys', 'tmp')
+            WHERE {$where}
             GROUP BY `TABLE_SCHEMA`");
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -45,44 +81,8 @@ function printout($databases) {
         }
         echo "\n";
     }
-}
 
-/*
-aws dynamodb update-item
-    --table-name Database
-    --key '{"server":{"S":"addsitemariadb2"},"database":{"S":"addsite_actioncodes"}}'
-    --update-expression "SET info.#ac = :ac"
-    --expression-attribute-names '{"#ac":"admin_creds"}'
-    --expression-attribute-values '{":ac":{"S":"SUPERSCRET"}}'
-*/
-
-$awsCommand = "/Users/wubbobos/Library/Python/3.6/bin/aws";
-
-function updateItem($server, $database, $info) {
-    global $awsCommand;
-
-    $updates = [];
-    $attrNames = [];
-    $attrValues = [];
-    foreach ($info as $key => $value) {
-        $updates[] = "info.#{$key} = :{$key}";
-        $attrNames["#{$key}"] = $key;
-        $attrValues[":{$key}"] = [ "S" => $value ];
-    }
-    $updateExpression = "SET " . implode(", ", $updates);
-    $expressionAttributeNames = json_encode($attrNames);
-    $expressionAttributeValues = json_encode($attrValues);
-    $key = json_encode(["server" => [ "S" => $server ], "database" => [ "S" => $database ]]);
-
-    $cmd = "{$awsCommand} dynamodb update-item " .
-        "--table-name \"Database\" " .
-        "--key '{$key}' " .
-        "--update-expression \"{$updateExpression}\" " .
-        "--expression-attribute-names '{$expressionAttributeNames}' " .
-        "--expression-attribute-values '{$expressionAttributeValues}'";
-
-    exec($cmd, $output, $return_val);
-    // echo $cmd . PHP_EOL;
+    echo "\n";
 }
 
 exec("{$awsCommand} dynamodb scan --table-name \"Database\"", $output, $return_val);
@@ -90,16 +90,32 @@ $json = implode("\n", $output);
 $data = json_decode($json, true);
 // var_dump($data);
 
-$knownCredentials = [
-    // "addsitemariadb2" => "addsite_maria:niyGGdTrhyAfn4qW4bhL"
-];
+$servers = [];
 
 foreach ($data["Items"] as $item) {
     $server = $item["server"]["S"];
     $database = $item["database"]["S"];
-    if (isset($knownCredentials[$server])) {
-        $creds = $knownCredentials[$server];
-        $encrypted = @openssl_encrypt($creds, "AES-192-CBC", $config["encrypt_secret"]);
-        updateItem($server, $database, [ "admin_creds" => $encrypted ]);
+
+    if (!isset($servers[$server])) {
+        $creds = openssl_decrypt($item["info"]["M"]["admin_creds"]["S"], "AES-192-CBC", $config["encrypt_secret"]);
+        list($username, $password) = explode(":", $creds);
+        $servers[$server] = [
+            "username" => $username,
+            "password" => $password,
+            "databases" => []
+        ];
+    }
+    $servers[$server]["databases"][] = $database;
+}
+
+foreach ($servers as $host => $server) {
+    $usage = checkdb("{$host}.cfhrwespomiw.eu-west-1.rds.amazonaws.com", $server["username"], $server["password"], $server["databases"]);
+    echo "Server: {$host}\n\n";
+    printout($usage);
+
+    foreach ($usage as $db) {
+        updateItem($host, $db["name"], [ "usage" => $db["usage"] ]);
     }
 }
+
+// var_dump($servers);
