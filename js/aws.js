@@ -485,6 +485,31 @@ class DataSourceRDS extends DataSource {
     }
 }
 
+class DataSourceCloudsearch extends DataSource {
+    constructor() {
+        super();
+        this.cloudsearch = new AWS.CloudSearch();
+    }
+
+    fetch() {
+        return new Promise((resolve, reject) => {
+            this.cloudsearch.describeDomains({}, (err, data) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                this.items = data.DomainStatusList;
+                resolve();
+            });
+        });
+    }
+
+    itemMatches(item, selector) {
+        return item.DomainId == selector;
+    }
+}
+
 class DataSourceList extends DataSource {
     constructor(items, selectorKeyPath) {
         super();
