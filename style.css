@@ -691,11 +691,16 @@ body > .loader-dimmer {
 .status.stopped {
     background-color: var(--danger-color);
 }
+.status.terminated {
+    background-color: rgba(101, 119, 134, 0.25);
+}
 
 @media (prefers-color-scheme: dark) {
     html {
         --primary-color: #308BF5;
         --primary-dark-color: #1171e1;
+        --success-color: #70BD36;
+        --danger-color: #FF2448;
     }
     body {
         background-color: #1D2022;

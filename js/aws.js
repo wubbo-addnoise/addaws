@@ -26,7 +26,10 @@ let AWSUtils = {
                 return "Gepauzeerd";
             case "stopped":
                 return "Gestopt";
+            case "terminated":
+                return "Getermineerd";
         }
+        return status;
     }
 };
 
