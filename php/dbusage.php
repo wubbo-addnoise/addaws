@@ -2,7 +2,7 @@
 
 $config = include "config.php";
 
-$awsCommand = "/Users/wubbobos/Library/Python/3.6/bin/aws";
+$awsCommand = "/usr/bin/aws";
 
 function updateItem($itemKey, $info) {
     global $awsCommand;
