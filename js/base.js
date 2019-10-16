@@ -39,3 +39,19 @@ window.Ux = {};
         }
     });
 }
+
+function formatFileSize(size) {
+    let output = size;
+    size = parseInt(size);
+    if (size > 1073741824) {
+        output = `${Math.round(size * 10 / 1073741824) / 10} GB`;
+    } else if (size > 1048576) {
+        output = `${Math.round(size * 10 / 1048576) / 10} MB`;
+    } else if (size > 1024) {
+        output = `${Math.round(size * 10 / 1024) / 10} KB`;
+    } else {
+        output = `${size} B`;
+    }
+
+    return output;
+}

@@ -4,7 +4,7 @@ $config = include "config.php";
 
 $awsCommand = "/Users/wubbobos/Library/Python/3.6/bin/aws";
 
-function updateItem($server, $database, $info) {
+function updateItem($itemKey, $info) {
     global $awsCommand;
 
     $updates = [];
@@ -20,7 +20,14 @@ function updateItem($server, $database, $info) {
     $updateExpression = "SET " . implode(", ", $updates);
     $expressionAttributeNames = json_encode($attrNames);
     $expressionAttributeValues = json_encode($attrValues);
-    $key = json_encode(["server" => [ "S" => $server ], "database" => [ "S" => $database ]]);
+
+    $key = [];
+    foreach ($itemKey as $k => $v) {
+        $typeKey = "S";
+        if (is_int($v)) $typeKey = "N";
+        $key[$k] = [ $typeKey => "{$v}" ];
+    }
+    $key = json_encode($key);
 
     $cmd = "{$awsCommand} dynamodb update-item " .
         "--table-name \"Database\" " .
@@ -29,7 +36,6 @@ function updateItem($server, $database, $info) {
         "--expression-attribute-names '{$expressionAttributeNames}' " .
         "--expression-attribute-values '{$expressionAttributeValues}'";
 
-    echo "Updating {$server}.{$database}: " . json_encode($info) . "\n";
     exec($cmd, $output, $return_val);
     // echo $cmd . PHP_EOL;
 }
@@ -114,7 +120,7 @@ foreach ($servers as $host => $server) {
     printout($usage);
 
     foreach ($usage as $db) {
-        updateItem($host, $db["name"], [ "usage" => $db["usage"] ]);
+        updateItem([ "server" => $host, "database" => $db["name"] ], [ "usage" => $db["usage"] ]);
     }
 }
 

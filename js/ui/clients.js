@@ -26,13 +26,15 @@ class ClientDetailView extends ModalView {
         this.domDbTable
             .addColumn("server", "Server")
             .addColumn("database", "Database")
-            .addColumn("based_on", "Gebaseerd op");
+            .addColumn("based_on", "Gebaseerd op")
+            .addColumn("usage", "Gebruik", { content: formatFileSize });
         this.element.querySelector(".db-content").appendChild(this.domDbTable.element);
 
         this.domEfsTable = new Dom.Table();
         this.domEfsTable
             .addColumn("server", "Server")
-            .addColumn("directory", "Directory");
+            .addColumn("directory", "Directory")
+            .addColumn("usage", "Gebruik", { content: formatFileSize });
         this.element.querySelector(".efs-content").appendChild(this.domEfsTable.element);
     }
 
@@ -111,26 +113,44 @@ class ClientDetailView extends ModalView {
             });
 
             this.databasesTable.getItems().then(items => {
+                let totalUsage = 0;
                 for (let i = 0; i < items.length; i++) {
                     if (items[i].info.client == this.clientId) {
                         this.domDbTable.addRow({
                             server: items[i].server,
                             database: items[i].database,
                             based_on: items[i].info.based_on || "",
+                            usage: items[i].info.usage||0
                         });
+                        if (items[i].info.usage) {
+                            totalUsage += items[i].info.usage;
+                        }
                     }
                 }
+                this.domDbTable.addRow({
+                    server: '<strong>Totaal</strong>',
+                    usage: totalUsage
+                });
             });
 
             this.efsTable.getItems().then(items => {
+                let totalUsage = 0;
                 for (let i = 0; i < items.length; i++) {
                     if (items[i].info.client == this.clientId) {
                         this.domEfsTable.addRow({
                             server: items[i].fsid,
-                            directory: items[i].directory
+                            directory: items[i].directory,
+                            usage: items[i].info.usage||0
                         });
+                        if (items[i].info.usage) {
+                            totalUsage += items[i].info.usage;
+                        }
                     }
                 }
+                this.domEfsTable.addRow({
+                    server: '<strong>Totaal</strong>',
+                    usage: totalUsage
+                });
             });
         } else {
             this.element.querySelector("h2").innerHTML = "Klant toevoegen";

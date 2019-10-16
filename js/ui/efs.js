@@ -70,6 +70,7 @@ class EFSDetailView extends ModalView {
         this.domTable
             .addColumn("name", "Directory")
             .addColumn("client", "Klant")
+            .addColumn("usage", "Gebruik", { content: formatFileSize })
             .addColumn("_", "_", { align: "right" });
         this.element.querySelector(".content").appendChild(this.domTable.element);
 
@@ -99,6 +100,7 @@ class EFSDetailView extends ModalView {
                 this.domTable.addRow({
                     name: items[i].directory,
                     client: items[i].info.client,
+                    usage: items[i].info.usage||0,
                     _: `<a href="#" data-action="editDirectory(${items[i].directory})">Aanpassen <i class="material-icons">chevron_right</i></a>`
                 });
                 ((index, db) => {
@@ -138,7 +140,8 @@ class EFSView extends View {
             .addColumn("id", "ID")
             .addColumn("name", "EFS Server")
             .addColumn("status", "Status")
-            .addColumn("num_dir", "Aantal directories");
+            .addColumn("num_dir", "Aantal directories")
+            .addColumn("usage", "Gebruik", { content: formatFileSize });
             // .addColumn("_", "_", { align: "right" });
         this.element.querySelector(".content").appendChild(this.domTable.element);
 
@@ -175,18 +178,22 @@ class EFSView extends View {
             }, fs.FileSystemId);
         }).then(() => {
             this.efsTable.getItems().then(items => {
-                let numDirs = {};
+                let servers = {};
 
                 for (let i = 0; i < items.length; i++) {
                     let item = items[i];
-                    if (!(item.fsid in numDirs)) {
-                        numDirs[item.fsid] = 0;
+                    if (!(item.fsid in servers)) {
+                        servers[item.fsid] = { numDirs: 0, usage: 0 };
                     }
-                    numDirs[item.fsid]++;
+                    servers[item.fsid].numDirs++;
+                    if (item.info.usage) {
+                        servers[item.fsid].usage += item.info.usage;
+                    }
                 }
 
-                for (let name in numDirs) {
-                    this.domTable.getCell(name, "num_dir").setHtml(numDirs[name]);
+                for (let name in servers) {
+                    this.domTable.getCell(name, "num_dir").setHtml(servers[name].numDirs);
+                    this.domTable.getCell(name, "usage").setHtml(formatFileSize(servers[name].usage));
                 }
 
                 this.invalidated = false;
