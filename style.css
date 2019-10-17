@@ -71,6 +71,15 @@ a:link, a:visited {
 a:hover, a:active {
     color: var(--primary-dark-color);
 }
+a.action-link:link, a.action-link:visited {
+    color: inherit;
+    opacity: 0.8;
+    transition: opacity .2s;
+}
+a.action-link:hover, a.action-link:active {
+    color: inherit;
+    opacity: 1;
+}
 a.more {
     font-weight: 600;
 }
@@ -93,6 +102,10 @@ hr.header-accent {
 
 .block {
     margin-bottom: 2rem;
+}
+
+.right.floated {
+    float: right;
 }
 
 /* BUTTONS */
@@ -286,6 +299,7 @@ button.button {
     display: block;
     transform: translateY(10px);
     animation: tab-slide-up .2s ease-out forwards;
+    min-height: 150px;
 }
 
 

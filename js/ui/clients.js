@@ -246,6 +246,7 @@ class ClientsView extends View {
     }
 
     refresh() {
+        let loader = new Ux.Loader(this.element);
         this.clientsTable.getItems().then((items) => {
             this.domTable.clearRows();
 
@@ -256,6 +257,8 @@ class ClientsView extends View {
                     id: item.uid
                 });
             }
+
+            loader.stop();
         });
     }
 

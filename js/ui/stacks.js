@@ -178,6 +178,8 @@ class StacksView extends View {
     }
 
     refresh() {
+        let loader = new Ux.Loader(this.element);
+
         this.stacksTable.getItems().then((items) => {
             this.domTable.clearRows();
 
@@ -202,6 +204,7 @@ class StacksView extends View {
             }
 
             this.invalidated = false;
+            loader.stop();
         });
     }
 

@@ -67,6 +67,8 @@ class ServersView extends View {
     }
 
     refresh() {
+        let loader = new Ux.Loader(this.element);
+
         this.domTable.clearRows();
         this.instances = {};
 
@@ -89,6 +91,7 @@ class ServersView extends View {
                 }
             });
             this.invalidated = false;
+            loader.stop();
         });
     }
 

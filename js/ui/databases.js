@@ -154,7 +154,7 @@ class DatabasesView extends View {
             //.addColumn("_", "_", { align: "right" });
         this.element.querySelector(".content").appendChild(this.domTable.element);
 
-        this.invalidated = true;
+        this.invalidated = false;
         this.ready = false;
 
         this.databasesTable.ensureExistence({ "server": [ "HASH", "S" ], "database": [ "RANGE", "S" ] })
@@ -162,6 +162,8 @@ class DatabasesView extends View {
                 this.ready = true;
                 if (this.invalidated) {
                     this.refresh();
+                } else {
+                    this.invalidated = true;
                 }
             })
             .catch((err) => {
@@ -177,6 +179,8 @@ class DatabasesView extends View {
     }
 
     refresh() {
+        let loader = new Ux.Loader(this.element);
+
         this.domTable.clearRows();
 
         this.dataSource.each((db) => {
@@ -207,6 +211,8 @@ class DatabasesView extends View {
                 }
 
                 this.invalidated = false;
+
+                loader.stop();
             });
         });
     }

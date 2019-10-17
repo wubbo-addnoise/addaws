@@ -93,6 +93,8 @@ class EFSDetailView extends ModalView {
     }
 
     refresh() {
+        let loader = new Ux.Loader(this.element);
+
         this.domTable.clearRows();
 
         this.efsTable.findItems({ fsid: this.fsId }).then(items => {
@@ -110,6 +112,7 @@ class EFSDetailView extends ModalView {
                 })(i, items[i]);
             }
             this.invalidated = false;
+            loader.stop();
         });
     }
 
