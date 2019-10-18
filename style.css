@@ -780,3 +780,22 @@ body > .loader-dimmer {
         background-color: rgba(29, 32, 34, 0.9);
     }
 }
+
+
+code {
+    font: 13px Menlo, Monaco, "Courier New", Courier, monospace;
+}
+.code-tab {
+    display: inline-block;
+    width: 30px;
+    vertical-align: middle;
+}
+.code-modify {
+    color: var(--warning-color);
+}
+.code-add {
+    color: var(--success-color);
+}
+.code-remove {
+    color: var(--danger-color);
+}

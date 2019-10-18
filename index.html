@@ -171,30 +171,71 @@
     <div class="modal" id="database-edit-modal">
         <div class="modal-inner">
             <h2>Database</h2>
-            <form class="form">
-                <div class="field">
-                    <label for="db_name">Naam</label>
-                    <input type="text" name="name" id="db_name" />
+            <nav class="menubar">
+                <ul class="menu" data-tab-group>
+                    <li class="item"><a href="#" class="active" data-tab="database-edit">Aanpassen</a></li>
+                    <li class="item"><a href="#" data-tab="database-migration">Migratie log</a></li>
+                </ul>
+            </nav>
+            <div class="tabs" data-tab-group>
+                <div class="active tab" data-tab="database-edit">
+                    <form class="form">
+                        <div class="field">
+                            <label for="db_name">Naam</label>
+                            <input type="text" name="name" id="db_name" />
+                        </div>
+                        <div class="field">
+                            <label for="db_client">Klant</label>
+                            <select name="client" id="db_client" class="custom-select fullwidth">
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="db_based_on">Gebaseerd op</label>
+                            <select class="custom-select" name="based_on" id="db_based_on"></select>
+                        </div>
+                        <div class="field" data-show-when="based_on = 'other'">
+                            <!-- <label for="db_name">Naam</label> -->
+                            <input type="text" name="based_on_other" id="db_based_on_other" data-focus-when="based_on = 'other'" />
+                        </div>
+                        <button type="submit" class="button">Opslaan</button>
+                    </form>
                 </div>
-                <div class="field">
-                    <label for="db_client">Klant</label>
-                    <select name="client" id="db_client" class="custom-select fullwidth">
-                    </select>
+
+                <div class="tab" data-tab="database-migration">
+                    <code>
+                        <div class="code-modify">
+                        ALTER TABLE `tags` MODIFY `created_by` int(11) unsigned NOT NULL;<br/>
+                        ALTER TABLE `tags` MODIFY `modified_by` int(11) unsigned NOT NULL;<br/>
+                        ALTER TABLE `tags` ADD `key` varchar(255) AFTER `name`;<br/>
+                        </div>
+                        <br/>
+                        <div class="code-add">
+                        CREATE TABLE `attribute_filters` (<br/>
+                        <span class="code-tab"></span>`id` int(11) unsigned NOT NULL auto_increment,<br/>
+                        <span class="code-tab"></span>`object_type_id` int(11),<br/>
+                        <span class="code-tab"></span>`channel_id` int(11),<br/>
+                        <span class="code-tab"></span>`system` varchar(255),<br/>
+                        <span class="code-tab"></span>`name` varchar(255),<br/>
+                        <span class="code-tab"></span>`description` varchar(255),<br/>
+                        <span class="code-tab"></span>`filters` longblob,<br/>
+                        <span class="code-tab"></span>`default_filter` varchar(255),<br/>
+                        <span class="code-tab"></span>`settings` longblob,<br/>
+                        <span class="code-tab"></span>`cache` longblob,<br/>
+                        <span class="code-tab"></span>`cache_touched` datetime,<br/>
+                        <span class="code-tab"></span>`created` datetime,<br/>
+                        <span class="code-tab"></span>`created_by` int(11),<br/>
+                        <span class="code-tab"></span>`modified` datetime,<br/>
+                        <span class="code-tab"></span>`modified_by` int(11),<br/>
+                        <span class="code-tab"></span>PRIMARY KEY (`id`)<br/>
+                        );
+                        </div>
+                        <br/>
+                        <div class="code-remove">
+                        DROP TABLE `very_old_table`;<br/>
+                        </div>
+                    </code>
                 </div>
-                <div class="field">
-                    <label for="db_based_on">Gebaseerd op</label>
-                    <select class="custom-select" name="based_on" id="db_based_on">
-                        <option value="addsite_live">addsite_live</option>
-                        <option value="addsite_object">addsite_object</option>
-                        <option value="other">Anders...</option>
-                    </select>
-                </div>
-                <div class="field" data-show-when="based_on = 'other'">
-                    <!-- <label for="db_name">Naam</label> -->
-                    <input type="text" name="based_on_other" id="db_based_on_other" data-focus-when="based_on = 'other'" />
-                </div>
-                <button type="submit" class="button">Opslaan</button>
-            </form>
+            </div>
         </div>
     </div>
 

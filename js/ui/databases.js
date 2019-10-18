@@ -2,6 +2,14 @@ class DatabaseEditView extends ModalView {
     viewDidLoad() {
         this.element.querySelector("form").addEventListener("submit", (event) => this.onSubmit(event));
         this.form = new DomUtils.Form(this.element.querySelector("form"));
+
+        this.basedOnPredefined = [ "addsite_live", "addsite_object", "addsite_control" ];
+
+        let select = this.form.getField("based_on");
+        for (let i = 0; i < this.basedOnPredefined.length; i++) {
+            select.addOption(this.basedOnPredefined[i], this.basedOnPredefined[i]);
+        }
+        select.addOption("other", "Anders...");
     }
 
     viewDidAppear() {
@@ -25,7 +33,7 @@ class DatabaseEditView extends ModalView {
                 this.databasesTable.getItem({ server: this.server, database: this.database }).then(item => {
                     this.form.getField("name").setValue(item.database);
                     this.form.getField("client").setValue(item.client);
-                    this.form.getField("based_on").setValue((item.based_on == "addsite_live" || item.based_on == "addsite_object") ? item.based_on : "other");
+                    this.form.getField("based_on").setValue(this.basedOnPredefined.indexOf(item.based_on) > -1 ? item.based_on : "other");
                     this.form.getField("based_on_other").setValue(item.based_on||"");
                 });
             } else {
@@ -82,8 +90,8 @@ class DatabaseDetailView extends ModalView {
             .addColumn("name", "Database")
             .addColumn("based_on", "Gebaseerd op")
             .addColumn("client", "Klant")
-            .addColumn("usage", "Gebruik", { content: formatFileSize })
-            .addColumn("_", "_", { align: "right" });
+            .addColumn("usage", "Gebruik", { content: formatFileSize });
+            // .addColumn("_", "_", { align: "right" });
         this.element.querySelector(".content").appendChild(this.domTable.element);
 
         this.ready = true;
@@ -110,11 +118,10 @@ class DatabaseDetailView extends ModalView {
         this.databasesTable.findItems({ server: this.dbName }).then(items => {
             for (let i = 0; i < items.length; i++) {
                 this.domTable.addRow({
-                    name: items[i].database,
+                    name: `<a href="#" data-action="editDatabase(${items[i].database})">${items[i].database}</a>`,
                     based_on: items[i].based_on || "",
                     client: items[i].client,
-                    usage: items[i].usage||0,
-                    _: `<a href="#" data-action="editDatabase(${items[i].database})">Aanpassen <i class="material-icons">chevron_right</i></a>`
+                    usage: items[i].usage||0
                 });
                 ((index, db) => {
                     this.clientsTable.getItem(db.client).then(client => {
