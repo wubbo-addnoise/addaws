@@ -702,7 +702,7 @@ class Schema
     }
 }
 
-$pdo = new PDO("mysql:host=127.0.0.1", "root", "wubje318");
+$pdo = new PDO("mysql:host=127.0.0.1", "XXX", "XXX");
 $schemaRoot = new Schema("addsite_object", $pdo);
 $schemaAgriteam = new Schema("agriteam_object", $pdo);
 
