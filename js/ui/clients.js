@@ -41,8 +41,8 @@ class ClientDetailView extends ModalView {
     viewDidAppear() {
         if (this.clientId) {
             this.clientsTable.getItem(this.clientId).then((item) => {
-                this.element.querySelector(".modal-title").innerHTML = item.info.name;
-                this.element.querySelector("#client_name").value = item.info.name;
+                this.element.querySelector(".modal-title").innerHTML = item.name;
+                this.element.querySelector("#client_name").value = item.name;
                 this.element.querySelector(".delete.button").style.display = "inline-block";
             });
 
@@ -101,12 +101,12 @@ class ClientDetailView extends ModalView {
 
             this.stacksTable.getItems().then(items => {
                 for (let i = 0; i < items.length; i++) {
-                    if (items[i].info.stack_client == this.clientId) {
+                    if (items[i].client == this.clientId) {
                         this.domStacksTable.addRow({
                             name: items[i].uid,
-                            efs_type: items[i].info.stack_efs_type,
-                            db_type: items[i].info.stack_db_type,
-                            status: items[i].info.stack_status || "running",
+                            efs_type: items[i].efs_type,
+                            db_type: items[i].db_type,
+                            status: items[i].status || "running",
                         });
                     }
                 }
@@ -115,15 +115,15 @@ class ClientDetailView extends ModalView {
             this.databasesTable.getItems().then(items => {
                 let totalUsage = 0;
                 for (let i = 0; i < items.length; i++) {
-                    if (items[i].info.client == this.clientId) {
+                    if (items[i].client == this.clientId) {
                         this.domDbTable.addRow({
                             server: items[i].server,
                             database: items[i].database,
-                            based_on: items[i].info.based_on || "",
-                            usage: items[i].info.usage||0
+                            based_on: items[i].based_on || "",
+                            usage: items[i].usage||0
                         });
-                        if (items[i].info.usage) {
-                            totalUsage += items[i].info.usage;
+                        if (items[i].usage) {
+                            totalUsage += items[i].usage;
                         }
                     }
                 }
@@ -136,14 +136,14 @@ class ClientDetailView extends ModalView {
             this.efsTable.getItems().then(items => {
                 let totalUsage = 0;
                 for (let i = 0; i < items.length; i++) {
-                    if (items[i].info.client == this.clientId) {
+                    if (items[i].client == this.clientId) {
                         this.domEfsTable.addRow({
                             server: items[i].fsid,
                             directory: items[i].directory,
-                            usage: items[i].info.usage||0
+                            usage: items[i].usage||0
                         });
-                        if (items[i].info.usage) {
-                            totalUsage += items[i].info.usage;
+                        if (items[i].usage) {
+                            totalUsage += items[i].usage;
                         }
                     }
                 }
@@ -253,7 +253,7 @@ class ClientsView extends View {
             for (let i = 0; i < items.length; i++) {
                 let item = items[i];
                 this.domTable.addRow({
-                    name: `<a href="#" data-action="showDetail(${item.uid})">${item.info.name}</a>`,
+                    name: `<a href="#" data-action="showDetail(${item.uid})">${item.name}</a>`,
                     id: item.uid
                 });
             }

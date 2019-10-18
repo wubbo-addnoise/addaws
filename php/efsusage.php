@@ -2,16 +2,16 @@
 
 $awsCommand = "/usr/bin/aws";
 
-function updateItem($itemKey, $info) {
+function updateItem($itemKey, $data) {
     global $awsCommand;
 
     $updates = [];
     $attrNames = [];
     $attrValues = [];
-    foreach ($info as $key => $value) {
+    foreach ($data as $key => $value) {
         $typeKey = "S";
         if (is_int($value)) $typeKey = "N";
-        $updates[] = "info.#{$key} = :{$key}";
+        $updates[] = "#{$key} = :{$key}";
         $attrNames["#{$key}"] = $key;
         $attrValues[":{$key}"] = [ $typeKey => "{$value}" ];
     }

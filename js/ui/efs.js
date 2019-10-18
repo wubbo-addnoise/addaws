@@ -16,16 +16,15 @@ class EFSDirectoryEditView extends ModalView {
             let select = this.form.getField("client");
             select.clearOptions();
             for (let i = 0; i < items.length; i++) {
-                select.addOption(items[i].uid, items[i].info.name);
+                select.addOption(items[i].uid, items[i].name);
             }
 
             Plugins.select(this.element);
 
             if (this.directory) {
                 this.efsTable.getItem({ fsid: this.fsId, directory: this.directory }).then(item => {
-                    console.log(item);
                     this.form.getField("name").setValue(item.directory);
-                    this.form.getField("client").setValue(item.info.client);
+                    this.form.getField("client").setValue(item.client);
                 });
             } else {
                 this.form.clearValues();
@@ -53,7 +52,8 @@ class EFSDirectoryEditView extends ModalView {
             let data = {
                 fsid: this.fsId,
                 directory: values.name,
-                client: values.client
+                client: values.client,
+                usage: 0
             };
 
             this.efsTable.insert(data).then(() => {
@@ -101,13 +101,13 @@ class EFSDetailView extends ModalView {
             for (let i = 0; i < items.length; i++) {
                 this.domTable.addRow({
                     name: items[i].directory,
-                    client: items[i].info.client,
-                    usage: items[i].info.usage||0,
+                    client: items[i].client,
+                    usage: items[i].usage||0,
                     _: `<a href="#" data-action="editDirectory(${items[i].directory})">Aanpassen <i class="material-icons">chevron_right</i></a>`
                 });
-                ((index, db) => {
-                    this.clientsTable.getItem(db.info.client).then(client => {
-                        this.domTable.getCell(index, "client").setHtml(client.info.name);
+                ((index, directory) => {
+                    this.clientsTable.getItem(directory.client).then(client => {
+                        this.domTable.getCell(index, "client").setHtml(client.name);
                     });
                 })(i, items[i]);
             }
@@ -189,8 +189,8 @@ class EFSView extends View {
                         servers[item.fsid] = { numDirs: 0, usage: 0 };
                     }
                     servers[item.fsid].numDirs++;
-                    if (item.info.usage) {
-                        servers[item.fsid].usage += item.info.usage;
+                    if (item.usage) {
+                        servers[item.fsid].usage += item.usage;
                     }
                 }
 

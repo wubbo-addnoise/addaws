@@ -16,7 +16,7 @@ class DatabaseEditView extends ModalView {
             let select = this.form.getField("client");
             select.clearOptions();
             for (let i = 0; i < items.length; i++) {
-                select.addOption(items[i].uid, items[i].info.name);
+                select.addOption(items[i].uid, items[i].name);
             }
 
             Plugins.select(this.element);
@@ -24,9 +24,9 @@ class DatabaseEditView extends ModalView {
             if (this.database) {
                 this.databasesTable.getItem({ server: this.server, database: this.database }).then(item => {
                     this.form.getField("name").setValue(item.database);
-                    this.form.getField("client").setValue(item.info.client);
-                    this.form.getField("based_on").setValue((item.info.based_on == "addsite_live" || item.info.based_on == "addsite_object") ? item.info.based_on : "other");
-                    this.form.getField("based_on_other").setValue(item.info.based_on);
+                    this.form.getField("client").setValue(item.client);
+                    this.form.getField("based_on").setValue((item.based_on == "addsite_live" || item.based_on == "addsite_object") ? item.based_on : "other");
+                    this.form.getField("based_on_other").setValue(item.based_on||"");
                 });
             } else {
                 this.form.clearValues();
@@ -46,6 +46,8 @@ class DatabaseEditView extends ModalView {
                 based_on: values.based_on == "other" ? values.based_on_other : values.based_on,
                 client: values.client
             };
+
+            if (!data.based_on) delete data.based_on;
 
             this.databasesTable.update({ server: this.server, database: this.database }, data).then(() => {
                 loader.stop("success", "De wijzigingen zijn opgeslagen").then(() => this.modal.close())
@@ -109,14 +111,14 @@ class DatabaseDetailView extends ModalView {
             for (let i = 0; i < items.length; i++) {
                 this.domTable.addRow({
                     name: items[i].database,
-                    based_on: items[i].info.based_on || "",
-                    client: items[i].info.client,
-                    usage: items[i].info.usage||0,
+                    based_on: items[i].based_on || "",
+                    client: items[i].client,
+                    usage: items[i].usage||0,
                     _: `<a href="#" data-action="editDatabase(${items[i].database})">Aanpassen <i class="material-icons">chevron_right</i></a>`
                 });
                 ((index, db) => {
-                    this.clientsTable.getItem(db.info.client).then(client => {
-                        this.domTable.getCell(index, "client").setHtml(client.info.name);
+                    this.clientsTable.getItem(db.client).then(client => {
+                        this.domTable.getCell(index, "client").setHtml(client.name);
                     });
                 })(i, items[i]);
             }
@@ -200,8 +202,8 @@ class DatabasesView extends View {
                     }
 
                     servers[item.server].numDbs++;
-                    if (item.info.usage) {
-                        servers[item.server].usage += item.info.usage;
+                    if (item.usage) {
+                        servers[item.server].usage += item.usage;
                     }
                 }
 

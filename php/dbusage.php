@@ -4,16 +4,16 @@ $config = include "config.php";
 
 $awsCommand = "/usr/bin/aws";
 
-function updateItem($itemKey, $info) {
+function updateItem($itemKey, $data) {
     global $awsCommand;
 
     $updates = [];
     $attrNames = [];
     $attrValues = [];
-    foreach ($info as $key => $value) {
+    foreach ($data as $key => $value) {
         $typeKey = "S";
         if (is_int($value)) $typeKey = "N";
-        $updates[] = "info.#{$key} = :{$key}";
+        $updates[] = "#{$key} = :{$key}";
         $attrNames["#{$key}"] = $key;
         $attrValues[":{$key}"] = [ $typeKey => "{$value}" ];
     }
@@ -103,7 +103,7 @@ foreach ($data["Items"] as $item) {
     $database = $item["database"]["S"];
 
     if (!isset($servers[$server])) {
-        $creds = openssl_decrypt($item["info"]["M"]["admin_creds"]["S"], "AES-192-CBC", $config["encrypt_secret"]);
+        $creds = openssl_decrypt($item["admin_creds"]["S"], "AES-192-CBC", $config["encrypt_secret"]);
         list($username, $password) = explode(":", $creds);
         $servers[$server] = [
             "username" => $username,

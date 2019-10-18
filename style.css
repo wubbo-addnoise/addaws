@@ -106,6 +106,7 @@ hr.header-accent {
 
 .right.floated {
     float: right;
+    padding-top: 10px;
 }
 
 /* BUTTONS */

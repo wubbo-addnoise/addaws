@@ -6,25 +6,25 @@ class StackDetailView extends ModalView {
     }
 
     viewDidAppear() {
-        let input = this.form.getField("stack_name");
+        let input = this.form.getField("name");
         input.setValue(this.stack ? this.stack.uid : "");
         input.focus();
 
         async function fillSelects() {
             let items = await this.clientsTable.getItems();
 
-            let select = this.form.getField("stack_client");
+            let select = this.form.getField("client");
             select.clearOptions();
             for (let i = 0; i < items.length; i++) {
-                select.addOption(items[i].uid, items[i].info.name);
+                select.addOption(items[i].uid, items[i].name);
             }
 
-            select = this.form.getField("stack_database");
+            select = this.form.getField("database");
             await this.rdsDataSource.each((db) => {
                 select.addOption(db.DBInstanceArn, db.DBInstanceIdentifier);
             });
 
-            select = this.form.getField("stack_efs");
+            select = this.form.getField("efs");
             await this.efsDataSource.each((fs) => {
                 select.addOption(fs.FileSystemId, fs.Name);
             });
@@ -37,11 +37,11 @@ class StackDetailView extends ModalView {
         fillSelects.call(this).then(() => {
 
             if (this.stack) {
-                this.form.getField("stack_client").setValue(this.stack.info.stack_client);
-                this.form.getField("stack_efs_type").setValue(this.stack.info.stack_efs_type);
-                this.form.getField("stack_efs").setValue(this.stack.info.stack_efs);
-                this.form.getField("stack_db_type").setValue(this.stack.info.stack_db_type);
-                this.form.getField("stack_database").setValue(this.stack.info.stack_database);
+                this.form.getField("client").setValue(this.stack.client);
+                this.form.getField("efs_type").setValue(this.stack.efs_type);
+                this.form.getField("efs").setValue(this.stack.efs);
+                this.form.getField("db_type").setValue(this.stack.db_type);
+                this.form.getField("database").setValue(this.stack.database);
 
             } else {
                 this.form.clearValues();
@@ -58,7 +58,7 @@ class StackDetailView extends ModalView {
         let values = this.form.getValues();
         let loader = new Ux.Loader(this.element);
 
-        if (this.stack && ("stack_status" in this.stack.info) && this.stack.info.stack_status == "running") {
+        if (this.stack && ("status" in this.stack) && this.stack.status == "running") {
             let cloudFormation = new AWS.CloudFormation();
             cloudFormation.describeStackResources({ StackName: this.stack.uid }, (err, data) => {
                 if (err) {
@@ -142,7 +142,7 @@ class StackDetailView extends ModalView {
             });
 
         } else {
-            values.uid = values.stack_name;
+            values.uid = values.name;
             this.stacksTable.insert(values).then(() => {
                 loader.stop("success", "De wijzigingen zijn opgeslagen").then(() => this.modal.close())
             });
@@ -190,15 +190,15 @@ class StacksView extends View {
                 this.stacks[stack.uid] = stack;
                 this.domTable.addRow({
                     name: `<a href="#" data-action="showDetail(${stack.uid})">${stack.uid}</a>`,
-                    client: stack.info.stack_client,
-                    status: stack.info.stack_status || "running",
-                    efs_type: stack.info.stack_efs_type == "shared" ? '<i class="material-icons small">share</i> Gedeeld' : '<i class="material-icons small">lock</i> Eigen',
-                    db_type: stack.info.stack_db_type == "shared" ? '<i class="material-icons small">share</i> Gedeeld' : '<i class="material-icons small">lock</i> Eigen',
+                    client: stack.client,
+                    status: stack.status || "running",
+                    efs_type: stack.efs_type == "shared" ? '<i class="material-icons small">share</i> Gedeeld' : '<i class="material-icons small">lock</i> Eigen',
+                    db_type: stack.db_type == "shared" ? '<i class="material-icons small">share</i> Gedeeld' : '<i class="material-icons small">lock</i> Eigen',
                     // _: `<a href="#" data-action="showDetail(${stack.uid})">Stack bekijken <i class="material-icons">chevron_right</i></a>`
                 }, i);
                 ((index, stack) => {
-                    this.clientsTable.getItem(stack.info.stack_client).then(client => {
-                        this.domTable.getCell(index, "client").setHtml(client.info.name);
+                    this.clientsTable.getItem(stack.client).then(client => {
+                        this.domTable.getCell(index, "client").setHtml(client.name);
                     });
                 })(i, stack);
             }

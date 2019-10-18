@@ -101,16 +101,16 @@
             <form class="form">
                 <div class="field">
                     <label for="stack_name">Naam</label>
-                    <input type="text" name="stack_name" id="stack_name" />
+                    <input type="text" name="name" id="stack_name" />
                 </div>
                 <div class="field">
                     <label for="stack_client">Klant</label>
-                    <select name="stack_client" class="custom-select fullwidth">
+                    <select id="stack_client" name="client" class="custom-select fullwidth">
                     </select>
                 </div>
                 <div class="field">
                     <label for="stack_status">Status</label>
-                    <select name="stack_status" class="custom-select fullwidth">
+                    <select id="stack_status" name="status" class="custom-select fullwidth">
                         <option value="running">Draaiend</option>
                         <option value="paused">Gepauzeerd</option>
                         <option value="stopped">Gestopt</option>
@@ -120,7 +120,7 @@
                     <div class="col">
                         <div class="field">
                             <label for="stack_efs_type">Opslagtype</label>
-                            <select name="stack_efs_type" class="custom-select fullwidth">
+                            <select id="stack_efs_type" name="efs_type" class="custom-select fullwidth">
                                 <option value="shared">Gedeeld</option>
                                 <option value="private">Eigen opslag</option>
                             </select>
@@ -129,7 +129,7 @@
                     <div class="col">
                         <div class="field">
                             <label for="stack_efs">EFS</label>
-                            <select name="stack_efs" class="custom-select fullwidth">
+                            <select id="stack_efs" name="efs" class="custom-select fullwidth">
                             </select>
                         </div>
                     </div>
@@ -138,7 +138,7 @@
                     <div class="col">
                         <div class="field">
                             <label for="stack_db_type">Database type</label>
-                            <select name="stack_db_type" class="custom-select fullwidth">
+                            <select id="stack_db_type" name="db_type" class="custom-select fullwidth">
                                 <option value="shared">Gedeeld</option>
                                 <option value="private">Eigen server</option>
                             </select>
@@ -147,7 +147,7 @@
                     <div class="col">
                         <div class="field">
                             <label for="stack_database">Database</label>
-                            <select name="stack_database" class="custom-select fullwidth">
+                            <select id="stack_database" name="database" class="custom-select fullwidth">
                             </select>
                         </div>
                     </div>
@@ -312,7 +312,7 @@
 
     <script>
     try {
-        let clientsTable = new DBTable("Client", { defaultSort: "info.name" });
+        let clientsTable = new DBTable("Client", { defaultSort: "name" });
         let stacksTable = new DBTable("Stack", { defaultSort: "uid/i" });
         let databasesTable = new DBTable("Database");
         let efsTable = new DBTable("EFS");

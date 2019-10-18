@@ -61,28 +61,16 @@ class DBTable {
             delete this.cache[key];
         }
     }
-
-    sortItemsInfo(items, key) {
-        if (key.match(/\/i$/)) {
-            key = key.replace(/\/i$/, '');
-            items.sort((a, b) => a.info[key].toLowerCase() == b.info[key].toLowerCase() ? 0 : a.info[key].toLowerCase() < b.info[key].toLowerCase() ? -1 : 1);
-        } else {
-            items.sort((a, b) => a.info[key] == b.info[key] ? 0 : a.info[key] < b.info[key] ? -1 : 1);
-        }
     }
 
     sortItems(items) {
         if (!this.defaultSort) return;
-        if (this.defaultSort.substring(0, 5) == "info.") {
-            this.sortItemsInfo(items, this.defaultSort.substring(5));
+        let key = this.defaultSort;
+        if (key.match(/\/i$/)) {
+            key = key.replace(/\/i$/, '');
+            items.sort((a, b) => a[key].toLowerCase() == b[key].toLowerCase() ? 0 : a[key].toLowerCase() < b[key].toLowerCase() ? -1 : 1);
         } else {
-            let key = this.defaultSort;
-            if (key.match(/\/i$/)) {
-                key = key.replace(/\/i$/, '');
-                items.sort((a, b) => a[key].toLowerCase() == b[key].toLowerCase() ? 0 : a[key].toLowerCase() < b[key].toLowerCase() ? -1 : 1);
-            } else {
-                items.sort((a, b) => a[key] == b[key] ? 0 : a[key] < b[key] ? -1 : 1);
-            }
+            items.sort((a, b) => a[key] == b[key] ? 0 : a[key] < b[key] ? -1 : 1);
         }
     }
 
@@ -174,20 +162,7 @@ class DBTable {
 
     insert(data) {
         return new Promise((resolve, reject) => {
-            let item = {
-                info: data
-            };
-
-            for (let i = 0; i < this.pkey.length; i++) {
-                if (this.pkey[i] in data) {
-                    item[this.pkey[i]] = data[this.pkey[i]];
-                    delete data[this.pkey[i]];
-                }
-            }
-
-            if (Object.keys(item) == 1) {
-                item.uid = Math.floor(Date.now() / 1000) % 1000;
-            }
+            let item = { ...data };
 
             let params = {
                 TableName: this.name,
@@ -213,7 +188,7 @@ class DBTable {
 
             let c = 1;
             for (let key in data) {
-                updExpr += `${updExpr ? ", " : "set "}info.#a${c} = :a${c}`;
+                updExpr += `${updExpr ? ", " : "set "}#a${c} = :a${c}`;
                 attrNames[`#a${c}`] = key;
                 attrValues[`:a${c}`] = data[key];
                 c++;

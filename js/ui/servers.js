@@ -3,6 +3,11 @@ class ServerDetailView extends ModalView {
         Plugins.select(this.element);
         this.element.querySelector("form").addEventListener("submit", (event) => this.onSubmit(event));
         this.form = new DomUtils.Form(this.element.querySelector("form"));
+
+        // this.serversTable.ensureExistence("S")
+        //     .catch((err) => {
+        //         console.log(err);
+        //     });
     }
 
     viewDidAppear() {
@@ -10,7 +15,7 @@ class ServerDetailView extends ModalView {
             let select = this.form.getField("client");
             select.clearOptions();
             for (let i = 0; i < items.length; i++) {
-                select.addOption(items[i].uid, items[i].info.name);
+                select.addOption(items[i].uid, items[i].name);
             }
 
             Plugins.select(this.element);
@@ -86,7 +91,7 @@ class ServersView extends View {
                 for (let i = 0; i < items.length; i++) {
                     let spans = this.element.querySelectorAll(`[data-client="${items[i].uid}"]`);
                     for (let j = 0; j < spans.length; j++) {
-                        spans[j].innerHTML = items[i].info.name;
+                        spans[j].innerHTML = items[i].name;
                     }
                 }
             });
