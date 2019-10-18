@@ -61,7 +61,6 @@ class DBTable {
             delete this.cache[key];
         }
     }
-    }
 
     sortItems(items) {
         if (!this.defaultSort) return;
