@@ -799,3 +799,38 @@ code {
 .code-remove {
     color: var(--danger-color);
 }
+
+/* NOTIFICATIONS */
+.notifications {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 100%;
+    max-width: 320px;
+}
+.notification {
+    margin-bottom: 1rem;
+    background-color: rgba(255, 255, 255, 0.75);
+    padding: 1rem;
+    border-radius: 5px;
+    color: black;
+    font-size: 13px;
+}
+.notification .message-title {
+    font-weight: bold;
+}
+
+/* BADGES */
+.badge {
+    display: inline-block;
+    font-size: .625em;
+    height: 1.75em;
+    line-height: 1.75;
+    padding: 0 0.625em;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    border-radius: 0.875em;
+    position: relative;
+    top: -0.375em;
+}

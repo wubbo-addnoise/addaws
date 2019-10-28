@@ -20,6 +20,7 @@
                 <li class="item"><a href="#" data-tab="maintab-databases">Database servers</a></li>
                 <li class="item"><a href="#" data-tab="maintab-efs">EFS</a></li>
                 <li class="item"><a href="#" data-tab="maintab-servers">Servers</a></li>
+                <li class="item"><a href="#" data-tab="maintab-notifications">Notificaties <span class="badge danger" id="notification-count" style="display: none;">3</span></a></li>
             </ul>
         </nav>
         <div class="tabs" data-tab-group>
@@ -49,6 +50,23 @@
                 <div class="right floated"><a href="#" class="action-link" data-action="refresh" title="Verversen"><i class="material-icons">refresh</i></a></div>
                 <h2>Servers</h2>
                 <div class="content"></div>
+            </div>
+            <div class="tab" data-tab="maintab-notifications" id="notifications-view">
+                <div class="right floated"><a href="#" class="action-link" data-action="refresh" title="Verversen"><i class="material-icons">refresh</i></a></div>
+                <h2>Notificaties</h2>
+                <div class="content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notifications">
+        <div class="notification">
+            <div class="image">
+                <div class="avatar"></div>
+            </div>
+            <div class="message">
+                <div class="message-title">There is an alarm!!!</div>
+                <div class="message-descripton">Lorem ipsum doler sit amet tres roxnas et plokeing. Lucius in domus est.</div>
             </div>
         </div>
     </div>
@@ -350,6 +368,7 @@
     <script src="js/ui/databases.js"></script>
     <script src="js/ui/efs.js"></script>
     <script src="js/ui/servers.js"></script>
+    <script src="js/ui/notifications.js"></script>
 
     <script>
     try {
@@ -361,6 +380,7 @@
         let rdsDataSource = new DataSourceRDS();
         let efsDataSource = new DataSourceEFS();
         let ec2DataSource = new DataSourceEC2();
+        let cloudWatchDataSource = new DataSourceCloudWatch();
 
         let app = {
             clientsView: new ClientsView(document.getElementById("clients-view"), {
@@ -389,10 +409,24 @@
             serversView: new ServersView(document.getElementById("servers-view"), {
                 dataSource: ec2DataSource,
                 clientsTable: clientsTable,
+            }),
+            notificationsView: new NotificationsView(document.getElementById("notifications-view"), {
+                dataSource: cloudWatchDataSource,
             })
         };
 
         Plugins.tabs(document);
+
+        cloudWatchDataSource.fetch().then(() => {
+            let badge = document.getElementById("notification-count");
+            let count = cloudWatchDataSource.items.length;
+            badge.innerHTML = count;
+            if (count == 0) {
+                badge.style.display = "none";
+            } else {
+                badge.style.display = "inline-block";
+            }
+        });
     } catch (e) {
         console.log(e);
     }
