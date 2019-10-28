@@ -24,11 +24,25 @@ class Column extends TableItem
     {
         $this->table = $table;
 
-        $this->name = $def["COLUMN_NAME"];
-        $this->type = $def["COLUMN_TYPE"];
-        $this->nullable = $def["IS_NULLABLE"] == "YES";
-        $this->defaultValue = $def["COLUMN_DEFAULT"];
-        $this->extra = $def["EXTRA"];
+        if (!empty($def)) {
+            $this->name = $def["COLUMN_NAME"];
+            $this->type = $def["COLUMN_TYPE"];
+            $this->nullable = $def["IS_NULLABLE"] == "YES";
+            $this->defaultValue = $def["COLUMN_DEFAULT"];
+            $this->extra = strtolower($def["EXTRA"]);
+        }
+    }
+
+    public function factory(Table $table, string $name, string $type, bool $nullable, $defaultValue = null, $extra = null)
+    {
+        $col = new Column([], $table);
+        $col->name = $name;
+        $col->type = $type;
+        $col->nullable = $nullable;
+        $col->defaultValue = $defaultValue;
+        $col->extra = strtolower($extra);
+
+        return $col;
     }
 
     public function getName()
@@ -76,6 +90,11 @@ class Index extends TableItem
     public function __construct(string $name)
     {
         $this->name = $name;
+    }
+
+    public function getName()
+    {
+        return $this->name;
     }
 
     public function addColumn(string $column)
@@ -147,11 +166,11 @@ class ForeignKey extends Index
     public function serialize()
     {
         $ser = "FOREIGN KEY (`" . implode("`, `", $this->columns) . "`) REFERENCES `{$this->refTable}` (`{$this->refColumn}`)";
-        if ($this->updateRule) {
-            $ser .= " ON UPDATE {$this->updateRule}";
-        }
         if ($this->deleteRule) {
             $ser .= " ON DELETE {$this->deleteRule}";
+        }
+        if ($this->updateRule) {
+            $ser .= " ON UPDATE {$this->updateRule}";
         }
         return $ser;
     }
@@ -368,8 +387,91 @@ class Table
         $this->fetchInfo();
     }
 
+    public static function fromSql(string $sql, Schema $schema)
+    {
+        $table = new Table("", "", $schema);
+        $table->parseSql($sql);
+        return $table;
+    }
+
+    public function parseSql($sql)
+    {
+        preg_match('/^CREATE TABLE `([^`]+)` \(/', $sql, $match);
+        $this->name = $match[1];
+        $p1 = strlen($match[0]);
+        $p2 = strrpos($sql, ')');
+        $fieldsSql = substr($sql, $p1 + 1, ($p2 - $p1) - 1);
+        $fields = array_map("trim", explode(",\n", $fieldsSql));
+
+        foreach ($fields as $field) {
+            if (preg_match('/^`([^`]+)`\s([^\s]+(\sunsigned)?)(\sNOT\sNULL)?(\sDEFAULT\s([^\s]+))?(\sAUTO_INCREMENT)?/i', $field, $m)) {
+                $nullable = count($m) > 4 ? $m[4] != " NOT NULL" : true;
+                $defaultValue = null;
+                if (count($m) > 5) {
+                    $defaultValue = $m[6];
+                    if ($defaultValue == "NULL") $defaultValue = null;
+                    else if ($defaultValue && $defaultValue[0] == "'") $defaultValue = str_replace("''", "'", trim($defaultValue, "'"));
+                    if ($defaultValue === '') {
+                        if ($nullable || !preg_match('/^(char|varchar|text|mediumtext|largetext|blob|mediumblob|largeblob)/', $m[2])) {
+                            $defaultValue = null;
+                        }
+                    }
+                }
+                $column = Column::factory(
+                    $this,
+                    $m[1],
+                    $m[2],
+                    $nullable,
+                    $defaultValue,
+                    count($m) > 7 ? trim($m[7]) : null
+                );
+                $this->columnIndexes[$column->getName()] = count($this->columns);
+                if (count($this->columns) > 0) {
+                    $column->after(end($this->columns)->getName());
+                }
+                $this->columns[] = $column;
+            } else if (preg_match('/^PRIMARY\sKEY\s\(([^\)]+)\)/', $field, $m)) {
+                $columns = array_map(function ($item) { return trim($item, '`'); }, explode(',', $m[1]));
+                $index = new PrimaryKey("PRIMARY");
+                foreach ($columns as $column) {
+                    $index->addColumn($column);
+                }
+                $this->indexes[$index->getName()] = $index;
+                $this->indexIndexes[$index->getNormalizedName()] = $index->getName();
+            } else if (preg_match('/^(UNIQUE\s)?KEY\s`([^`]+)`\s\(([^\)]+)\)/', $field, $m)) {
+                $columns = array_map(function ($item) { return trim($item, '`'); }, explode(',', $m[3]));
+                $index = $m[1] == "UNIQUE " ? new UniqueIndex($m[2]) : new Index($m[2]);
+                foreach ($columns as $column) {
+                    $index->addColumn($column);
+                }
+                $this->indexes[$index->getName()] = $index;
+                $this->indexIndexes[$index->getNormalizedName()] = $index->getName();
+            } else if (preg_match('/(CONSTRAINT\s`([^`]+)`\s)?FOREIGN\sKEY\s\(([^\)]+)\)\sREFERENCES\s`([^`]+)`\s?\(`([^`]+)`\)(\sON\sDELETE\s([A-Z]+))?(\sON\sUPDATE\s([A-Z]+))?/', $field, $m)) {
+                $index = new ForeignKey($m[2]);
+                $index->addColumn(trim($m[3], '`'));
+                $index->references($m[4], $m[5]);
+                if (count($m) > 6) {
+                    $index->onDelete($m[7]);
+                } else {
+                    $index->onDelete("RESTRICT");
+                }
+                if (count($m) > 8) {
+                    $index->onUpdate($m[9]);
+                } else {
+                    $index->onUpdate("RESTRICT");
+                }
+                $this->indexes[$index->getName()] = $index;
+                $this->indexIndexes[$index->getNormalizedName()] = $index->getName();
+            } else {
+                var_dump($field);
+            }
+        }
+    }
+
     protected function fetchInfo()
     {
+        if (!$this->schema->getPdo()) return;
+
         $columns = $this->schema->getColumns($this->name);
         foreach ($columns as $column) {
             $this->columnIndexes[$column["COLUMN_NAME"]] = count($this->columns);
@@ -384,6 +486,7 @@ class Table
         foreach ($indexes as $index) {
             $name = $index["INDEX_NAME"];
             if (!isset($this->indexes[$name])) {
+                // var_dump($name, $index["CONSTRAINT_TYPE"]);
                 switch ($index["CONSTRAINT_TYPE"]) {
                     case "PRIMARY KEY":
                         $this->indexes[$name] = new PrimaryKey($name);
@@ -471,7 +574,7 @@ class Table
         // Columns
         foreach ($this->columnIndexes as $column => $index) {
             if (!isset($other->columnIndexes[$column])) {
-                $migration->removeColumn($other->columns[$index]);
+                $migration->removeColumn($this->columns[$index]);
             }
         }
 
@@ -490,7 +593,7 @@ class Table
         // Indexes
         foreach ($this->indexIndexes as $name => $index) {
             if (!isset($other->indexIndexes[$name])) {
-                $migration->removeIndex($other->indexes[$index]);
+                $migration->removeIndex($this->indexes[$index]);
             }
         }
 
@@ -519,14 +622,57 @@ class Schema
     protected $indexes;
     protected $fkeys;
 
-    public function __construct(string $name, PDO $pdo)
+    public function __construct(string $name, PDO $pdo = null)
     {
         $this->name = $name;
-        $this->pdo = $pdo;
-        $this->fetchInfo();
-        $this->columns = null;
-        $this->indexes = null;
-        $this->fkeys = null;
+        if ($pdo) {
+            $this->pdo = $pdo;
+            $this->fetchInfo();
+            $this->columns = null;
+            $this->indexes = null;
+            $this->fkeys = null;
+        }
+    }
+
+    public static function fromSql(string $name, string $sql)
+    {
+        $schema = new Schema($name);
+        $schema->parseSql($sql);
+        return $schema;
+    }
+
+    public function parseSql($sql)
+    {
+        $sql = preg_replace('/#[^\r\n]*(\r|\n|\r\n|\n\r)/', '', $sql);
+        while (true) {
+            $pos = strpos($sql, '/*');
+            if ($pos === false) break;
+            $pos2 = strpos($sql, '*/', $pos);
+            if ($pos2 === false) {
+                $sql = substr($sql, 0, $pos);
+                break;
+            } else {
+                $sql = substr($sql, 0, $pos) . substr($sql, $pos2 + 2);
+            }
+        }
+
+        $offset = 0;
+        $length = strlen($sql);
+        while ($offset < $length) {
+            $pos = strpos($sql, "CREATE TABLE", $offset);
+            if ($pos === false) break;
+            $pos2 = strpos($sql, ";", $pos);
+            if ($pos2 === false) {
+                $tableSql = substr($sql, $pos);
+                $offset = $length;
+            } else {
+                $tableSql = substr($sql, $pos, $pos2 - $pos);
+                $offset = $pos2 + 1;
+            }
+
+            $table = Table::fromSql($tableSql, $this);
+            $this->tables[$table->getName()] = $table;
+        }
     }
 
     public function getName()
@@ -702,12 +848,21 @@ class Schema
     }
 }
 
-$pdo = new PDO("mysql:host=127.0.0.1", "XXX", "XXX");
+$pdo = new PDO("mysql:host=127.0.0.1", "root", "xXjh7fNcu8G8NAU9");
 $schemaRoot = new Schema("addsite_object", $pdo);
-$schemaAgriteam = new Schema("agriteam_object", $pdo);
+// $schemaAgriteam = new Schema("agriteam_object", $pdo);
 
-$diff = $schemaAgriteam->diff($schemaRoot);
-$diff->log();
+// $diff = $schemaAgriteam->diff($schemaRoot);
+// $diff->log();
+
 // $schema->dump();
 // $array = $schema->toArray();
 // file_put_contents("addsite_object.json", json_encode($array, JSON_PRETTY_PRINT));
+
+
+$sql = file_get_contents("/Users/wubbobos/Desktop/hollandsail_object_structure.sql");
+$schemaHs = Schema::fromSql("hollandsail_object", $sql);
+// var_dump($schemaHs->toArray());
+
+$diff = $schemaHs->diff($schemaRoot);
+$diff->log();
