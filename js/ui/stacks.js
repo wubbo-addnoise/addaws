@@ -54,88 +54,148 @@ class StackDetailView extends ModalView {
         });
     }
 
+    launchStack(values) {
+        let db = values.database.replace(/^([^:]+:)+/, '');
+        let params = {
+            StackName: values.name,
+            TemplateURL: "https://addsite.s3-eu-west-1.amazonaws.com/SharedStorageAndDatabase.yml",
+            Parameters: [
+                {
+                    "ParameterKey": "Name",
+                    "ParameterValue": values.name
+                },
+                {
+                    "ParameterKey": "ShortName",
+                    "ParameterValue": values.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+                },
+                {
+                    "ParameterKey": "VpcId",
+                    "ParameterValue": "vpc-a09004c5"
+                },
+                {
+                    "ParameterKey": "InstanceType",
+                    "ParameterValue": values.instance_type
+                },
+                {
+                    "ParameterKey": "ClientId",
+                    "ParameterValue": values.client
+                },
+                {
+                    "ParameterKey": "EfsId",
+                    "ParameterValue": values.efs
+                },
+                {
+                    "ParameterKey": "DatabaseHost",
+                    "ParameterValue": db + ".cfhrwespomiw.eu-west-1.rds.amazonaws.com"
+                },
+                {
+                    "ParameterKey": "DatabaseUsername",
+                    "ParameterValue": "addsite_maria"
+                },
+                {
+                    "ParameterKey": "DatabasePassword",
+                    "ParameterValue": "niyGGdTrhyAfn4qW4bhL"
+                }
+            ]
+        };
+console.log(params);
+        let cloudFormation = new AWS.CloudFormation();
+        cloudFormation.createStack(params, (err, data) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            console.log(data);
+        });
+    }
+
     onSubmit(event) {
         event.preventDefault();
 
         let values = this.form.getValues();
         let loader = new Ux.Loader(this.element);
 
-        if (this.stack && ("status" in this.stack) && this.stack.status == "running") {
-            let cloudFormation = new AWS.CloudFormation();
-            cloudFormation.describeStackResources({ StackName: this.stack.uid }, (err, data) => {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
+        // if (this.stack && ("status" in this.stack) && this.stack.status == "running") {
+        //     let cloudFormation = new AWS.CloudFormation();
+        //     cloudFormation.describeStackResources({ StackName: this.stack.uid }, (err, data) => {
+        //         if (err) {
+        //             console.log(err);
+        //             return;
+        //         }
 
-                let elb = new AWS.ELBv2();
+        //         let elb = new AWS.ELBv2();
 
-                for (let i = 0; i < data.StackResources.length; i++) {
-                    let resource = data.StackResources[i];
-                    switch (resource.ResourceType) {
-                        case "AWS::AutoScaling::AutoScalingGroup":
-                            let autoscaling = new AWS.AutoScaling();
-                            autoscaling.createOrUpdateTags({
-                                Tags: [{
-                                    Key: "ClientId",
-                                    Value: values.stack_client,
-                                    ResourceId: resource.PhysicalResourceId,
-                                    ResourceType: "auto-scaling-group",
-                                    PropagateAtLaunch: true
-                                }]
-                            }, (err, data) => {
-                                if (err) {
-                                    console.log(err, err.stack);
-                                }
-                                console.log(data);
-                            });
-                            break;
+        //         for (let i = 0; i < data.StackResources.length; i++) {
+        //             let resource = data.StackResources[i];
+        //             switch (resource.ResourceType) {
+        //                 case "AWS::AutoScaling::AutoScalingGroup":
+        //                     let autoscaling = new AWS.AutoScaling();
+        //                     autoscaling.createOrUpdateTags({
+        //                         Tags: [{
+        //                             Key: "ClientId",
+        //                             Value: values.stack_client,
+        //                             ResourceId: resource.PhysicalResourceId,
+        //                             ResourceType: "auto-scaling-group",
+        //                             PropagateAtLaunch: true
+        //                         }]
+        //                     }, (err, data) => {
+        //                         if (err) {
+        //                             console.log(err, err.stack);
+        //                         }
+        //                         console.log(data);
+        //                     });
+        //                     break;
 
-                        case "AWS::ElasticLoadBalancingV2::TargetGroup":
-                            elb.describeTargetHealth({
-                                TargetGroupArn: resource.PhysicalResourceId
-                            }, (err, data) => {
-                                if (err) {
-                                    console.log(err);
-                                    return;
-                                }
+        //                 case "AWS::ElasticLoadBalancingV2::TargetGroup":
+        //                     elb.describeTargetHealth({
+        //                         TargetGroupArn: resource.PhysicalResourceId
+        //                     }, (err, data) => {
+        //                         if (err) {
+        //                             console.log(err);
+        //                             return;
+        //                         }
 
-                                let resourceIds = data.TargetHealthDescriptions.map(th => th.Target.Id);
-                                let ec2 = new AWS.EC2();
-                                ec2.createTags({
-                                    Resources: resourceIds,
-                                    Tags: [{
-                                        Key: "ClientId",
-                                        Value: values.stack_client
-                                    }]
-                                }, (err, data) => {
-                                    if (err) {
-                                        console.log(err, err.stack);
-                                    }
-                                    console.log(data);
-                                });
-                            });
-                            break;
+        //                         let resourceIds = data.TargetHealthDescriptions.map(th => th.Target.Id);
+        //                         let ec2 = new AWS.EC2();
+        //                         ec2.createTags({
+        //                             Resources: resourceIds,
+        //                             Tags: [{
+        //                                 Key: "ClientId",
+        //                                 Value: values.stack_client
+        //                             }]
+        //                         }, (err, data) => {
+        //                             if (err) {
+        //                                 console.log(err, err.stack);
+        //                             }
+        //                             console.log(data);
+        //                         });
+        //                     });
+        //                     break;
 
-                        case "AWS::ElasticLoadBalancingV2::LoadBalancer":
-                            elb.addTags({
-                                ResourceArns: [
-                                    resource.PhysicalResourceId
-                                ],
-                                Tags: [{
-                                    Key: "ClientId",
-                                    Value: values.stack_client
-                                }]
-                            }, (err, data) => {
-                                if (err) {
-                                    console.log(err, err.stack);
-                                }
-                                console.log(data);
-                            });
-                            break;
-                    }
-                }
-            });
+        //                 case "AWS::ElasticLoadBalancingV2::LoadBalancer":
+        //                     elb.addTags({
+        //                         ResourceArns: [
+        //                             resource.PhysicalResourceId
+        //                         ],
+        //                         Tags: [{
+        //                             Key: "ClientId",
+        //                             Value: values.stack_client
+        //                         }]
+        //                     }, (err, data) => {
+        //                         if (err) {
+        //                             console.log(err, err.stack);
+        //                         }
+        //                         console.log(data);
+        //                     });
+        //                     break;
+        //             }
+        //         }
+        //     });
+        // }
+console.log(values.status, this.stack.status);
+        if (values.status == "running" && (!this.stack || this.stack.status != "running")) {
+            this.launchStack(values);
         }
 
         if (this.stack) {
