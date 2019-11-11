@@ -110,6 +110,20 @@ console.log(params);
         });
     }
 
+    terminateStack() {
+        let cloudFormation = new AWS.CloudFormation();
+        cloudFormation.deleteStack({
+            StackName: this.stack.uid
+        }, (err, data) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            console.log(data);
+        });
+    }
+
     onSubmit(event) {
         event.preventDefault();
 
@@ -193,9 +207,12 @@ console.log(params);
         //         }
         //     });
         // }
-console.log(values.status, this.stack.status);
+
         if (values.status == "running" && (!this.stack || this.stack.status != "running")) {
             this.launchStack(values);
+        }
+        else if (values.status != "running" && this.stack && this.stack.status == "running") {
+            this.terminateStack();
         }
 
         if (this.stack) {
