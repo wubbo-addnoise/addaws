@@ -38,10 +38,12 @@ class StackDetailView extends ModalView {
 
             if (this.stack) {
                 this.form.getField("client").setValue(this.stack.client);
+                this.form.getField("instance_type").setValue(this.stack.instance_type);
                 this.form.getField("efs_type").setValue(this.stack.efs_type);
                 this.form.getField("efs").setValue(this.stack.efs);
                 this.form.getField("db_type").setValue(this.stack.db_type);
                 this.form.getField("database").setValue(this.stack.database);
+                this.form.getField("status").setValue(this.stack.status);
 
             } else {
                 this.form.clearValues();

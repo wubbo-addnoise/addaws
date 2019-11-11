@@ -1,6 +1,7 @@
 /* AWS */
 AWS.config.region = 'eu-west-1'; // Region
 AWS.config.update(AwsConfig);
+// AWS.config.credentials = new AWS.CognitoIdentityCredentials(AwsCognito);
 // AWS.config.credentials = new AWS.CognitoIdentityCredentials({
     // IdentityPoolId: 'eu-west-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
     // IdentityId: 'eu-west-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
