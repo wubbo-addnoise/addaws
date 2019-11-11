@@ -463,6 +463,37 @@ class DataSourceRDS extends DataSource {
     }
 }
 
+class DataSourceCloudWatch extends DataSource {
+    constructor() {
+        super();
+        this.cloudWatch = new AWS.CloudWatch();
+    }
+
+    fetch() {
+        return new Promise((resolve, reject) => {
+            this.cloudWatch.describeAlarms({ StateValue: "ALARM" }, (err, data) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                this.items = [];
+                for (let i = 0; i < data.MetricAlarms.length; i++) {
+                    let alarm = data.MetricAlarms[i];
+                    if (alarm.MetricName != "CPUUtilization" || (alarm.ComparisonOperator != "LessThanThreshold" && alarm.ComparisonOperator != "LessThanOrEqualToThreshold")) {
+                        this.items.push(alarm);
+                    }
+                }
+                resolve();
+            });
+        });
+    }
+
+    itemMatches(item, selector) {
+        return item.DBInstanceName == selector;
+    }
+}
+
 class DataSourceCloudsearch extends DataSource {
     constructor() {
         super();
