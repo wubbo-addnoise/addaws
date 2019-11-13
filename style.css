@@ -710,6 +710,7 @@ body > .loader-dimmer {
     background-color: rgba(101, 119, 134, 0.25);
 }
 
+/*
 @media (prefers-color-scheme: dark) {
     html {
         --primary-color: #308BF5;
@@ -780,7 +781,7 @@ body > .loader-dimmer {
         background-color: rgba(29, 32, 34, 0.9);
     }
 }
-
+*/
 
 code {
     font: 13px Menlo, Monaco, "Courier New", Courier, monospace;
