@@ -434,7 +434,7 @@ class DataSourceEFS extends DataSource {
     }
 
     itemMatches(item, selector) {
-        return item.DBInstanceName == selector;
+        return item.FileSystemId == selector;
     }
 }
 
@@ -459,7 +459,7 @@ class DataSourceRDS extends DataSource {
     }
 
     itemMatches(item, selector) {
-        return item.FileSystemId == selector;
+        return item.DBInstanceName == selector;
     }
 }
 

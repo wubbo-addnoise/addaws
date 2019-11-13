@@ -20,14 +20,18 @@ class StackDetailView extends ModalView {
             }
 
             select = this.form.getField("database");
+            select.clearOptions();
             await this.rdsDataSource.each((db) => {
                 select.addOption(db.DBInstanceArn, db.DBInstanceIdentifier);
             });
+            select.addOption("private", "Eigen database");
 
             select = this.form.getField("efs");
+            select.clearOptions();
             await this.efsDataSource.each((fs) => {
                 select.addOption(fs.FileSystemId, fs.Name);
             });
+            select.addOption("private", "Eigen EFS");
 
             Plugins.select(this.element);
         }
@@ -39,9 +43,9 @@ class StackDetailView extends ModalView {
             if (this.stack) {
                 this.form.getField("client").setValue(this.stack.client);
                 this.form.getField("instance_type").setValue(this.stack.instance_type);
-                this.form.getField("efs_type").setValue(this.stack.efs_type);
+                // this.form.getField("efs_type").setValue(this.stack.efs_type);
                 this.form.getField("efs").setValue(this.stack.efs);
-                this.form.getField("db_type").setValue(this.stack.db_type);
+                // this.form.getField("db_type").setValue(this.stack.db_type);
                 this.form.getField("database").setValue(this.stack.database);
                 this.form.getField("status").setValue(this.stack.status);
 
@@ -54,7 +58,7 @@ class StackDetailView extends ModalView {
         });
     }
 
-    launchStack(values) {
+    doLaunchStack(values) {
         let db = values.database.replace(/^([^:]+:)+/, '');
         let params = {
             StackName: values.name,
@@ -85,20 +89,12 @@ class StackDetailView extends ModalView {
                     "ParameterValue": values.efs
                 },
                 {
-                    "ParameterKey": "DatabaseHost",
-                    "ParameterValue": db + ".cfhrwespomiw.eu-west-1.rds.amazonaws.com"
-                },
-                {
-                    "ParameterKey": "DatabaseUsername",
-                    "ParameterValue": "addsite_maria"
-                },
-                {
-                    "ParameterKey": "DatabasePassword",
-                    "ParameterValue": "niyGGdTrhyAfn4qW4bhL"
+                    "ParameterKey": "Database",
+                    "ParameterValue": db
                 }
             ]
         };
-console.log(params);
+
         let cloudFormation = new AWS.CloudFormation();
         cloudFormation.createStack(params, (err, data) => {
             if (err) {
@@ -110,9 +106,145 @@ console.log(params);
         });
     }
 
+    doLaunchDb(values) {
+        return new Promise((resolve,reject) => {
+            let rds = this.rdsDataSource.rds;
+            // bin2hex(random_bytes(8)):
+            let password = crypto.getRandomValues(new Uint8Array(8)).reduce((acc,value) => acc + value.toString(16).padStart(2, '0'), "");
+            let identifier = values.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+            rds.createDBInstance({
+                DBInstanceClass: "db.m4.medium",
+                DBInstanceIdentifier: identifier,
+                Engine: "mariadb",
+                AllocatedStorage: 100,
+                MasterUserName: "admin",
+                MasterPassword: password,
+                Tags: [ { "Key": "Name", "Value": values.client }]
+            }, (err, data) => {
+                if (err) {
+                    console.log(err);
+                    reject();
+                    return;
+                }
+
+                let key = CryptoJS.enc.Utf8.parse(Encryption.secret);
+                let iv = CryptoJS.enc.Utf8.parse(Encryption.iv);
+                let creds = CryptoJS.AES.encrypt(`admin:${password}`, key, { iv: iv }).toString();
+
+                this.databasesTable.insert({
+                    server: identifier,
+                    database: "admin",
+                    admin_creds: creds,
+                    client: values.client
+                });
+                this.databasesTable.insert({
+                    server: identifier,
+                    database: `${identifier}_live`,
+                    admin_creds: creds,
+                    client: values.client,
+                    based_on: "addsite_live"
+                });
+                this.databasesTable.insert({
+                    server: identifier,
+                    database: `${identifier}_object`,
+                    admin_creds: creds,
+                    client: values.client,
+                    based_on: "addsite_object"
+                });
+                this.databasesTable.insert({
+                    server: identifier,
+                    database: `${identifier}_control`,
+                    admin_creds: creds,
+                    client: values.client,
+                    based_on: "addsite_control"
+                });
+
+                resolve(data.DBInstance.DBInstanceArn);
+            });
+        });
+    }
+
+    doLaunchEfs(values) {
+        return new Promise((resolve, reject) => {
+            let efs = this.efsDataSource.efs;
+            let identifier = values.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+            efs.createFilesystem({
+                CreationToken: identifier,
+                PerformanceMode: "generalPurpose",
+                Tags: [
+                    {
+                        Key: "Name",
+                        Value: values.name
+                    }
+                ]
+            }, (err, data) => {
+                if (err) {
+                    console.log(err);
+                    reject();
+                    return;
+                }
+
+                this.efsTable.insert({
+                    fsid: data.FileSystemId,
+                    directory: identifier,
+                    client: values.client
+                });
+
+                resolve(data.FileSystemId)
+            });
+        });
+    }
+
+    launchStack(values) {
+        return new Promise((resolve, reject) => {
+            if (values.database == "private") {
+                // Launch new DB server
+                this.doLaunchDb(values).then((arn) => {
+                    values.database = arn;
+                    if (values.efs == "private") {
+                        // Launch new EFS server
+                        this.doLaunchEfs(values).then((fsid) => {
+                            values.efs = fsid;
+                            this.doLaunchStack(values);
+                            resolve(values);
+                        });
+                    } else {
+                        this.doLaunchStack(values);
+                        resolve(values);
+                    }
+                });
+            } else if (values.efs == "private") {
+                // Launch new EFS server
+                this.doLaunchEfs(values).then((fsid) => {
+                    values.efs = fsid;
+                    this.doLaunchStack(values);
+                    resolve(values);
+                });
+            } else {
+                this.doLaunchStack(values);
+                resolve(values);
+            }
+        });
+    }
+
     terminateStack() {
         let cloudFormation = new AWS.CloudFormation();
         cloudFormation.deleteStack({
+            StackName: this.stack.uid
+        }, (err, data) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            console.log(data);
+        });
+    }
+
+    pauseStack() {
+        let cloudFormation = new AWS.CloudFormation();
+        cloudFormation.setSecurityGroups({
             StackName: this.stack.uid
         }, (err, data) => {
             if (err) {
@@ -209,7 +341,10 @@ console.log(params);
         // }
 
         if (values.status == "running" && (!this.stack || this.stack.status != "running")) {
-            this.launchStack(values);
+            values = await this.launchStack(values);
+        }
+        else if (values.status == "paused" && this.stack && this.stack.status == "running") {
+            this.pauseStack();
         }
         else if (values.status != "running" && this.stack && this.stack.status == "running") {
             this.terminateStack();
@@ -299,7 +434,9 @@ class StacksView extends View {
                 stacksTable: this.stacksTable,
                 clientsTable: this.clientsTable,
                 rdsDataSource: this.rdsDataSource,
-                efsDataSource: this.efsDataSource
+                efsDataSource: this.efsDataSource,
+                efsTable: this.efsTable,
+                databasesTable: this.databasesTable
             });
             this.detailView.viewWillDisappear = () => this.refresh();
         } else {

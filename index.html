@@ -142,7 +142,7 @@
                         <option value="stopped">Gestopt</option>
                     </select>
                 </div>
-                <div class="cols cols-2 cols-pad">
+                <!-- <div class="cols cols-2 cols-pad">
                     <div class="col">
                         <div class="field">
                             <label for="stack_efs_type">Opslagtype</label>
@@ -152,13 +152,13 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col">
+                    <div class="col"> -->
                         <div class="field">
                             <label for="stack_efs">EFS</label>
                             <select id="stack_efs" name="efs" class="custom-select fullwidth">
                             </select>
                         </div>
-                    </div>
+                    <!-- </div>
                 </div>
                 <div class="cols cols-2 cols-pad">
                     <div class="col">
@@ -170,14 +170,14 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col">
+                    <div class="col"> -->
                         <div class="field">
                             <label for="stack_database">Database</label>
                             <select id="stack_database" name="database" class="custom-select fullwidth">
                             </select>
                         </div>
-                    </div>
-                </div>
+                    <!-- </div>
+                </div> -->
                 <div class="buttons">
                     <button type="submit" class="button">Opslaan</button>
                     <button type="button" class="button outline delete" data-action="delete" style="display: none">Klant verwijderen</button>
@@ -403,6 +403,8 @@
                 clientsTable: clientsTable,
                 rdsDataSource: rdsDataSource,
                 efsDataSource: efsDataSource,
+                efsTable: efsTable,
+                databasesTable: databasesTable,
             }),
             databasesView: new DatabasesView(document.getElementById("databases-view"), {
                 dataSource: rdsDataSource,
