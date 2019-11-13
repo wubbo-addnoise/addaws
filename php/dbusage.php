@@ -4,6 +4,31 @@ $config = include "config.php";
 
 $awsCommand = "/usr/bin/aws";
 
+function sendMail($message) {
+    global $awsCommand;
+
+    $jsonMessage = [
+        "Subject" => [
+            "Data" => "Test email sent using the AWS CLI",
+            "Charset" => "UTF-8"
+        ],
+        "Body" => [
+            "Text" => [
+                "Data" => "This is the message body in text format.",
+                "Charset" => "UTF-8"
+            ],
+            "Html" => [
+                "Data" => $message,
+                "Charset" => "UTF-8"
+            ]
+        ]
+    ];
+    file_put_contents("message.json", json_encode($jsonMessage));
+
+    $cmd = "{$awsCommand} ses send-email --from info@addnoise.nl --destination file://destination.json --message file://message.json";
+    exec($cmd);
+}
+
 function updateItem($itemKey, $data) {
     global $awsCommand;
 
@@ -91,37 +116,48 @@ function printout($databases) {
     echo "\n";
 }
 
-exec("{$awsCommand} dynamodb scan --table-name \"Database\"", $output, $return_val);
-$json = implode("\n", $output);
-$data = json_decode($json, true);
-// var_dump($data);
+ob_start();
 
-$servers = [];
+try {
 
-foreach ($data["Items"] as $item) {
-    $server = $item["server"]["S"];
-    $database = $item["database"]["S"];
+    exec("{$awsCommand} dynamodb scan --table-name \"Database\"", $output, $return_val);
+    $json = implode("\n", $output);
+    $data = json_decode($json, true);
+    // var_dump($data);
 
-    if (!isset($servers[$server])) {
-        $creds = openssl_decrypt($item["admin_creds"]["S"], "AES-256-CBC", $config["encrypt_secret"], 0, $config["encrypt_iv"]);
-        list($username, $password) = explode(":", $creds);
-        $servers[$server] = [
-            "username" => $username,
-            "password" => $password,
-            "databases" => []
-        ];
+    $servers = [];
+
+    foreach ($data["Items"] as $item) {
+        $server = $item["server"]["S"];
+        $database = $item["database"]["S"];
+
+        if (!isset($servers[$server])) {
+            $creds = openssl_decrypt($item["admin_creds"]["S"], "AES-256-CBC", $config["encrypt_secret"], 0, $config["encrypt_iv"]);
+            list($username, $password) = explode(":", $creds);
+            $servers[$server] = [
+                "username" => $username,
+                "password" => $password,
+                "databases" => []
+            ];
+        }
+        $servers[$server]["databases"][] = $database;
     }
-    $servers[$server]["databases"][] = $database;
-}
 
-foreach ($servers as $host => $server) {
-    $usage = checkdb("{$host}.cfhrwespomiw.eu-west-1.rds.amazonaws.com", $server["username"], $server["password"], $server["databases"]);
-    echo "Server: {$host}\n\n";
-    printout($usage);
+    foreach ($servers as $host => $server) {
+        $usage = checkdb("{$host}.cfhrwespomiw.eu-west-1.rds.amazonaws.com", $server["username"], $server["password"], $server["databases"]);
+        echo "Server: {$host}\n\n";
+        printout($usage);
 
-    foreach ($usage as $db) {
-        updateItem([ "server" => $host, "database" => $db["name"] ], [ "usage" => $db["usage"] ]);
+        foreach ($usage as $db) {
+            updateItem([ "server" => $host, "database" => $db["name"] ], [ "usage" => $db["usage"] ]);
+        }
     }
+
+} catch (Exception $ex) {
+    echo $ex->getMessage() . PHP_EOL;
+    echo $ex->getTraceAsString() . PHP_EOL;
 }
 
 // var_dump($servers);
+$output = ob_get_clean();
+sendMail($output);

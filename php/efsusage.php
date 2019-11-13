@@ -2,6 +2,31 @@
 
 $awsCommand = "/usr/bin/aws";
 
+function sendMail($message) {
+    global $awsCommand;
+
+    $jsonMessage = [
+        "Subject" => [
+            "Data" => "Test email sent using the AWS CLI",
+            "Charset" => "UTF-8"
+        ],
+        "Body" => [
+            "Text" => [
+                "Data" => "This is the message body in text format.",
+                "Charset" => "UTF-8"
+            ],
+            "Html" => [
+                "Data" => $message,
+                "Charset" => "UTF-8"
+            ]
+        ]
+    ];
+    file_put_contents("message.json", json_encode($jsonMessage));
+
+    $cmd = "{$awsCommand} ses send-email --from info@addnoise.nl --destination file://destination.json --message file://message.json";
+    exec($cmd);
+}
+
 function updateItem($itemKey, $data) {
     global $awsCommand;
 
@@ -53,11 +78,24 @@ function getUsage() {
     return $directories;
 }
 
-$usage = getUsage();
+ob_start();
 
-file_put_contents("usage.json", json_encode($usage));
-// $usage = json_decode(file_get_contents("usage.json"), true);
+try {
 
-foreach ($usage as $dir => $bytes) {
-    updateItem([ "fsid" => "fs-5efd7097", "directory" => $dir ], [ "usage" => $bytes ]);
+    $usage = getUsage();
+
+    file_put_contents("usage.json", json_encode($usage));
+    // $usage = json_decode(file_get_contents("usage.json"), true);
+
+    foreach ($usage as $dir => $bytes) {
+        updateItem([ "fsid" => "fs-5efd7097", "directory" => $dir ], [ "usage" => $bytes ]);
+    }
+
+} catch (Exception $ex) {
+    echo $ex->getMessage() . PHP_EOL;
+    echo $ex->getTraceAsString() . PHP_EOL;
 }
+
+// var_dump($servers);
+$output = ob_get_clean();
+sendMail($output);
