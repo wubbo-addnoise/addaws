@@ -103,7 +103,7 @@ foreach ($data["Items"] as $item) {
     $database = $item["database"]["S"];
 
     if (!isset($servers[$server])) {
-        $creds = openssl_decrypt($item["admin_creds"]["S"], "AES-192-CBC", $config["encrypt_secret"]);
+        $creds = openssl_decrypt($item["admin_creds"]["S"], "AES-256-CBC", $config["encrypt_secret"], 0, $config["encrypt_iv"]);
         list($username, $password) = explode(":", $creds);
         $servers[$server] = [
             "username" => $username,
